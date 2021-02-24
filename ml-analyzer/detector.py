@@ -22,7 +22,7 @@ class MLDetector:
     def __init__(self, context: Context):
         self.context = context
         # init detectors
-        self.detectors: List[IDetector] = [TensorFlowDetector()]
+        self.detectors: List[IDetector] = [TensorFlowLiteDetector()]
 
     def detect(self) -> Dict[str, List[DetectEvidence]]:
         result = defaultdict(list)
@@ -60,7 +60,7 @@ class IDetector:
 
 
 # TODO: write a test for this detector
-class TensorFlowDetector(IDetector):
+class TensorFlowLiteDetector(IDetector):
     def fw_type(self):
         return "TensorFlow Lite"
 
