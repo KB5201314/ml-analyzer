@@ -7,16 +7,22 @@ from extractor import MLExtractor
 
 
 def run():
-    logging.basicConfig()
+    logger.setLevel(logging.DEBUG)
 
-    context = Context(
-        apk_path="../mlapp/dataset/beauty/com.app.dimple.face.editor.apk")
+    apk_path = "../mlapp/dataset/beauty/com.dsrtech.lipsy.apk"
+    logger.info("Generating info for apk: {}".format(apk_path))
+    context = Context(apk_path=apk_path)
+    context.describe()
+
+    logger.info("Detecting ML for apk: {}".format(apk_path))
     detector = MLDetector(context)
-    detector.detect()
+    detect_results = detector.detect()
+    logger.debug("Detecting ML result: {}".format(detect_results))
 
 
 if __name__ == "__main__":
     # init logging
-    logging.basicConfig()
+    logging.basicConfig(
+        format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
     logger = logging.getLogger(__name__)
     run()
