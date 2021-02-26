@@ -66,6 +66,7 @@ class TensorFlowLiteDetector(IDetector):
 
     def detect_dot_so_file(self, elf: lief.ELF.Binary) -> bool:
         # detect by symbol
+        # TODO: tyr to use symbols specificed here https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/def_file_filter/def_file_filter.py.tpl
         detected_by_symbol = any(map(lambda s: s.name.startswith(
             'TfLite') or s.name.startswith('Java_org_tensorflow_lite_'), elf.symbols))
         if detected_by_symbol:

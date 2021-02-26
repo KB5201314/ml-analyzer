@@ -14,10 +14,15 @@ def run():
     context = Context(apk_path=apk_path)
     context.describe()
 
-    logger.info("Detecting ML for apk: {}".format(apk_path))
+    logger.info("Detecting ML framework for apk: {}".format(apk_path))
     detector = MLDetector(context)
     detect_results = detector.detect()
-    logger.debug("Detecting ML result: {}".format(detect_results))
+    logger.debug("Detecting ML framework result: {}".format(detect_results))
+
+    logger.info("Extracting ML model for apk: {}".format(apk_path))
+    extractor = MLExtractor(context)
+    extract_results = extractor.detect()
+    logger.debug("Extracting ML model result: {}".format(extract_results))
 
 
 if __name__ == "__main__":
