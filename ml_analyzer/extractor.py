@@ -10,36 +10,40 @@ import tensorflow as tf
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class ExtractedModel:
+    content: bytes
+    source: Any
+    # TODO: impl __eq__ method to compare `content` only
+
+    def __repr__(self):
+        return "<ExtractedModel: size: {} content: {}... source: {}>".format(len(self.content), self.content[:8], self.source)
+
+    def __str__(self):
+        return self.__repr__()
+
+
 class MLExtractor:
     def __init__(self, context):
         self.context = context
         # init extractors
-        self.extractors: List[IExtractor] = []
+        self.extractors: List[IExtractor] = [TensorFlowLiteDetector()]
 
-    def extract(self) -> Dict[str, bytes]:
-        result = defaultdict(set)
+    def extract(self) -> Dict[str, List[ExtractedModel]]:
+        result = defaultdict(list)
         # extract by scan files inside apk statically
         files = self.context.androguard_apk.get_files()
         # TODO: should we also check files outside the `assets/` directory ?
         for file_name in filter(lambda file_name: file_name.startswith("assets/"), files):
             bs = self.context.androguard_apk.get_file(file_name)
             for extractor in self.extractors:
-                result[extractor.fw_type()].update(
+                result[extractor.fw_type()].extend(
                     map(lambda model: ExtractedModel(model, file_name),
                         extractor.extract_model(bs, False))
                 )
         # TODO(2021-02-25):: extract model by run apk on device
 
-        # TODO(2021-02-25): impl TensorFlowLiteDetector
-
         return result
-
-
-@dataclass
-class ExtractedModel:
-    content: bytes
-    source: Any
-    # TODO: impl __eq__ method to compare `content` only
 
 
 class IExtractor:
@@ -66,7 +70,8 @@ class TensorFlowLiteDetector:
             try:
                 @concurrent.process(timeout=10)
                 def try_with_interpreter_internal(maybe_model: bytes) -> bool:
-                    interpreter = tf.lite.Interpreter(model_content=maybe_model)
+                    interpreter = tf.lite.Interpreter(
+                        model_content=maybe_model)
                     interpreter.allocate_tensors()
                 future = try_with_interpreter_internal(maybe_model)
                 future.result()
@@ -95,6 +100,3 @@ class TensorFlowLiteDetector:
         if try_with_interpreter(maybe_model):
             models.add(maybe_model)
         return models
-
-
-# TODO: try pytest and add github action

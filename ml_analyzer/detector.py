@@ -73,7 +73,7 @@ class TensorFlowLiteDetector(IDetector):
             return True
         # detect by .rodata
         try:
-            section = elf.get_section('.rodata')            
+            section = elf.get_section('.rodata')
             section_content = bytes(section.content)
             detected_by_rodata = b'TfLiteTensor' in section_content or b'kTfLiteUInt8' in section_content
             if detected_by_rodata:

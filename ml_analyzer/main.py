@@ -21,7 +21,7 @@ def run():
 
     logger.info("Extracting ML model for apk: {}".format(apk_path))
     extractor = MLExtractor(context)
-    extract_results = extractor.detect()
+    extract_results = extractor.extract()
     logger.debug("Extracting ML model result: {}".format(extract_results))
 
 
