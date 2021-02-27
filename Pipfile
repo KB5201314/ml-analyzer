@@ -8,6 +8,8 @@ androguard = "*"
 lief = "*"
 netron = "*"
 tensorflow = "*"
+pytest = "*"
+pebble = "*"
 
 [dev-packages]
 
