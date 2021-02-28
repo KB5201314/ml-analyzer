@@ -6,14 +6,16 @@ from androguard.core.bytecodes.apk import APK
 from androguard.core.bytecodes.dvm import DalvikVMFormat
 from androguard.core.analysis.analysis import Analysis
 
-import util
+from . import util
+from .device import Device
 
 logger = logging.getLogger(__name__)
 
 
 class Context:
-    def __init__(self, apk_path: str):
-        self.apk_path = apk_path
+    def __init__(self, apk_path: str, device: Device):
+        self.apk_path: str = apk_path
+        self.device: Device = device
         # analyze using androguard
         a, d, dx = misc.AnalyzeAPK(apk_path)
         self.androguard_apk: APK = a

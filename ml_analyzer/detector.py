@@ -7,7 +7,7 @@ from collections import defaultdict
 from androguard.core.bytecodes.dvm import DalvikVMFormat
 import lief
 
-from context import Context
+from .context import Context
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +73,7 @@ class TensorFlowLiteDetector(IDetector):
             return True
         # detect by .rodata
         try:
+            # TODO: scan on any other section? https://man7.org/linux/man-pages/man5/elf.5.html
             section = elf.get_section('.rodata')
             section_content = bytes(section.content)
             detected_by_rodata = b'TfLiteTensor' in section_content or b'kTfLiteUInt8' in section_content

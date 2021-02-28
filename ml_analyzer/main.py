@@ -1,17 +1,22 @@
 #!/bin/python3
 import logging
 
-from context import Context
-from detector import MLDetector
-from extractor import MLExtractor
+from .context import Context
+from .detector import MLDetector
+from .extractor import MLExtractor
+from .device import Device
 
 
 def run():
     logger.setLevel(logging.DEBUG)
-
     apk_path = "../mlapp/dataset/beauty/com.dsrtech.lipsy.apk"
+    adb_serial = None
+
+    logger.info("Connect to device: {}".format(apk_path))
+    device = Device(adb_serial=adb_serial)
+
     logger.info("Generating info for apk: {}".format(apk_path))
-    context = Context(apk_path=apk_path)
+    context = Context(apk_path=apk_path, device=device)
     context.describe()
 
     logger.info("Detecting ML framework for apk: {}".format(apk_path))

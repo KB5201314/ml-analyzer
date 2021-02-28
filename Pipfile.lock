@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f658494f0ace9465a0d8a45bdcc8e8a6ddfe5b2eadc9098bd3e896103efedf0a"
+            "sha256": "076c2bba12d4ac4482902e6b5a52073dc535081824c9d31e0c97aaeb7fd93584"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -114,12 +114,27 @@
             ],
             "version": "==4.4.2"
         },
+        "delegator.py": {
+            "hashes": [
+                "sha256:814657d96b98a244c479e3d5f6e9e850ac333e85f807d6bc846e72bbb2537806",
+                "sha256:e6cc9cedab9ae59b169ee0422e17231adedadb144e63c0b5a60e6ff8adf8521b"
+            ],
+            "index": "pypi",
+            "version": "==0.1.1"
+        },
         "flatbuffers": {
             "hashes": [
                 "sha256:63bb9a722d5e373701913e226135b28a6f6ac200d5cc7b4d919fa38d73b44610",
                 "sha256:9e9ef47fa92625c4721036e7c4124182668dc6021d9e7c73704edd395648deb9"
             ],
             "version": "==1.12"
+        },
+        "frida": {
+            "hashes": [
+                "sha256:bfeb68ab7b2717bf94e56e2ba025557e82c371878a1b2e1ac52d0a6342985d18"
+            ],
+            "index": "pypi",
+            "version": "==14.2.13"
         },
         "future": {
             "hashes": [
@@ -260,6 +275,14 @@
                 "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"
             ],
             "version": "==1.1.1"
+        },
+        "install": {
+            "hashes": [
+                "sha256:1455304a2475b6753a9b0c28243ca7d8b7d71aeea1a88e6de94034fc57d765a0",
+                "sha256:dfec614e0cc90f00659067a078bc2ec032d9f0758f3df230c073eeaffd0cefa1"
+            ],
+            "index": "pypi",
+            "version": "==1.3.4"
         },
         "ipython": {
             "hashes": [
@@ -439,10 +462,10 @@
         },
         "netron": {
             "hashes": [
-                "sha256:3cf8b844cbbb579d8d6a91e50d554c7667011715f151ae19fb3446641ef2338d"
+                "sha256:da4ce908d48325a7c9b8d74cd351d1ea86ba76126a606c4dde6c79b35533f345"
             ],
             "index": "pypi",
-            "version": "==4.7.9"
+            "version": "==4.8.0"
         },
         "networkx": {
             "hashes": [

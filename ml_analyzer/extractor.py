@@ -42,6 +42,13 @@ class MLExtractor:
                         extractor.extract_model(bs, False))
                 )
         # TODO(2021-02-25):: extract model by run apk on device
+        self.context.device.uninstall_pkg(self.context.pkg_name)
+        self.context.device.install_apk(self.context.apk_path)
+        if not self.context.device.start_pkg(self.context.pkg_name):
+            logger.warning("The application does not start as expected. app_path: {} pkg: {}".format(
+                self.context.apk_path, self.context.pkg_name))
+        else:
+            pass
 
         return result
 
