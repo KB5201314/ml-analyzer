@@ -25,6 +25,9 @@ set -o pipefail
 temp_dir=$(mktemp --directory) || exit $?
 cd ${temp_dir}
 
+# restart adbd with root
+adb root
+
 wget -q -O - https://api.github.com/repos/frida/frida/releases |
     jq '.[0] | .assets[] | select(.browser_download_url | match("server(.*?)android-'${PARCH}'*\\.xz")).browser_download_url' |
     xargs wget -q --show-progress &&
