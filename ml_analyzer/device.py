@@ -41,21 +41,23 @@ class Device:
 
     def adb_run(self, cmd: str) -> int:
         if self.adb_serial == None:
-            c = delegator.run('adb {}'.format(cmd))
+            cmd = 'adb {}'.format(cmd)
         else:
-            c = delegator.run(
-                'adb -s {} {}'.format(self.adb_serial, cmd))
+            cmd = 'adb -s {} {}'.format(self.adb_serial, cmd)
+        c = delegator.run(cmd)
+        logger.debug("outside command finished with return_code {}, cmd : `{}`".format(
+            c.return_code, cmd))
         return c.return_code
 
-    def install_apk(self, apk_path: str) -> bool:
+    def adb_install_apk(self, apk_path: str) -> bool:
         logger.debug('device: {} install apk: {}'.format(self, apk_path))
         return self.adb_run('install {}'.format(apk_path)) == 0
 
-    def uninstall_pkg(self, pkg_name: str) -> bool:
+    def adb_uninstall_pkg(self, pkg_name: str) -> bool:
         logger.debug('device: {} uninstall pkg: {}'.format(self, pkg_name))
         return self.adb_run('uninstall {}'.format(pkg_name)) == 0
 
-    def start_pkg(self, pkg_name: str) -> bool:
+    def adb_start_pkg(self, pkg_name: str) -> bool:
         logger.debug('device: {} start pkg: {}'.format(self, pkg_name))
         return self.adb_run('adb shell monkey -p {} -c android.intent.category.LAUNCHER 1'.format(pkg_name)) == 0
 

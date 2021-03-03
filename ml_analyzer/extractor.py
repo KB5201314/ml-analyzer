@@ -6,6 +6,9 @@ from abc import abstractmethod
 from pebble import concurrent
 
 import tensorflow as tf
+import frida
+
+from . import util
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +44,37 @@ class MLExtractor:
                     map(lambda model: ExtractedModel(model, file_name),
                         extractor.extract_model(bs, False))
                 )
-        # TODO(2021-02-25):: extract model by run apk on device
-        self.context.device.uninstall_pkg(self.context.pkg_name)
-        self.context.device.install_apk(self.context.apk_path)
-        if not self.context.device.start_pkg(self.context.pkg_name):
-            logger.warning("The application does not start as expected. app_path: {} pkg: {}".format(
+        # extract model by run apk on device
+        self.context.device.adb_uninstall_pkg(self.context.pkg_name)
+        if not self.context.device.adb_install_apk(self.context.apk_path):
+            logger.warning("failed to install apk. app_path: {} pkg: {}".format(
                 self.context.apk_path, self.context.pkg_name))
         else:
-            pass
+            def callback_on_message(msg, bs):
+                model_string = "mem_{}_{}".format(
+                    msg['payload']['base'], msg['payload']['base'])
+                if 'file' in msg['payload']:
+                    model_string = "{}_{}".format(
+                        model_string, msg['payload']['file']['path'])
+                for extractor in self.extractors:
+                    result[extractor.fw_type()].extend(
+                        map(lambda model: ExtractedModel(model, model_string),
+                            extractor.extract_model(bs, False))
+                    )
+            try:
+                frida_device: frida.core.Device = self.context.device.frida_device
+                pid = frida_device.spawn(self.context.pkg_name)
+                # TODO: what about child process ?
+                session = frida_device.attach(pid)
+                script = session.create_script(
+                    util.read_frida_script('enumerate_ranges.js'))
+                script.on('message', callback_on_message)
+                script.load()
+                frida_device.resume(pid)
+                script.exports.run()
+            except Exception as e:
+                logger.warning("The application does not start as expected. app_path: {} pkg: {} err: {}".format(
+                    self.context.apk_path, self.context.pkg_name, e))
 
         return result
 

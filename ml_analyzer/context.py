@@ -13,6 +13,18 @@ logger = logging.getLogger(__name__)
 
 
 class Context:
+    """Context which is used to represent an apk analysis process.
+
+    Attributes:
+        apk_path: A `str` value, which indicates the path of the apk file being analyzed.
+        package_name: A `str` value, which is the package name of apk.
+        sha1: A `str` value, which is the sha1 value of this apk.
+        device: A instance of `device.Device`, which indicates the device which is used in analysis process.
+        androguard_apk: A instance of `androguard.core.bytecodes.apk.APK`.
+        androguard_dexs: A instance of `androguard.core.bytecodes.dvm.DalvikVMFormat`.
+        androguard_analysis: A instance of `androguard.core.analysis.analysis.Analysis`.
+    """
+
     def __init__(self, apk_path: str, device: Device):
         self.apk_path: str = apk_path
         self.device: Device = device
