@@ -8,6 +8,12 @@ def sha1_of_bytes(bs: bytes) -> str:
     return m.hexdigest()
 
 
+def md5_of_bytes(bs: bytes) -> str:
+    m = hashlib.md5()
+    m.update(bs)
+    return m.hexdigest()
+
+
 def read_frida_script(script_path: str) -> str:
     script_dir = os.path.dirname(__file__)  # absolute dir the script is in
     script_path = os.path.join(script_dir, 'frida_scripts', script_path)

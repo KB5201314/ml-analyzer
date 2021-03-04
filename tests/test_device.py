@@ -16,6 +16,20 @@ def test_device_connect():
     get_device_then(lambda d: None)
 
 
+def test_device_read_file():
+    def callback(device: Device):
+        ret_1, file_content = device.adb_read_file(
+            '/data/local/tmp/frida-server')
+        ret_2, md5 = device.adb_run(
+            'shell md5sum -b /data/local/tmp/frida-server')
+        assert ret_1 == 0
+        assert ret_2 == 0
+        assert len(file_content) > 0
+        assert util.md5_of_bytes(file_content).lower() == md5.strip().lower()
+
+    get_device_then(callback)
+
+
 def get_device_then(callback):
     if 'CI' in os.environ:
         pytest.skip("CI environment detected. Skip device connect test.")
@@ -31,7 +45,6 @@ def get_device_then(callback):
 
 def test_device_enumerate_ranges():
     def callback(device: Device):
-        device = Device()
         d = device.frida_device
         pid = d.spawn("com.dsrtech.lipsy")
         session = d.attach(pid)
@@ -55,7 +68,6 @@ def test_device_hook_deallocation():
         # we assume that model file size is at least 1K
         min_model_size = 1024
 
-        device = Device()
         d = device.frida_device
         pid = d.spawn("com.dsrtech.lipsy")
         session = d.attach(pid)
