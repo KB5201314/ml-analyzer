@@ -50,31 +50,55 @@ class MLExtractor:
             logger.warning("failed to install apk. app_path: {} pkg: {}".format(
                 self.context.apk_path, self.context.pkg_name))
         else:
-            def callback_on_message(msg, bs):
-                model_string = "mem_{}_{}".format(
-                    msg['payload']['base'], msg['payload']['base'])
-                if 'file' in msg['payload']:
-                    model_string = "{}_{}".format(
-                        model_string, msg['payload']['file']['path'])
-                for extractor in self.extractors:
-                    result[extractor.fw_type()].extend(
-                        map(lambda model: ExtractedModel(model, model_string),
-                            extractor.extract_model(bs, False))
-                    )
+            # spawn application program
+            frida_device: frida.core.Device = self.context.device.frida_device
             try:
-                frida_device: frida.core.Device = self.context.device.frida_device
                 pid = frida_device.spawn(self.context.pkg_name)
                 # TODO: what about child process ?
                 session = frida_device.attach(pid)
-                script = session.create_script(
-                    util.read_frida_script('enumerate_ranges.js'))
-                script.on('message', callback_on_message)
-                script.load()
-                frida_device.resume(pid)
-                script.exports.run()
             except Exception as e:
                 logger.warning("The application does not start as expected. app_path: {} pkg: {} err: {}".format(
                     self.context.apk_path, self.context.pkg_name, e))
+
+            def setup_extract_by_scan_mem(session):
+                def callback_on_message(msg, bs):
+                    logger.debug(msg)
+                    model_string = "mem_scan_{}_{}".format(
+                        msg['payload']['base'], msg['payload']['size'])
+                    if 'file' in msg['payload']:
+                        model_string = "{}_{}".format(
+                            model_string, msg['payload']['file']['path'])
+                    for extractor in self.extractors:
+                        result[extractor.fw_type()].extend(
+                            map(lambda model: ExtractedModel(model, model_string),
+                                extractor.extract_model(bs, False))
+                        )
+                script = session.create_script(
+                    util.read_frida_script('extractor_script_enumerate_ranges.js'))
+                script.on('message', callback_on_message)
+                script.load()
+                script.exports.run()
+
+            def setup_extract_by_hook_deallocation(session):
+                def callback_on_message(msg, bs):
+                    logger.debug(msg)
+                    model_string = "mem_hook_deallocation_{}_{}".format(
+                        msg['payload']['pointer'], msg['payload']['size'])
+                    for extractor in self.extractors:
+                        result[extractor.fw_type()].extend(
+                            map(lambda model: ExtractedModel(model, model_string),
+                                extractor.extract_model(bs, True))
+                        )
+                script = session.create_script(
+                    util.read_frida_script('extractor_script_hook_deallocation.js'))
+                script.on('message', callback_on_message)
+                script.load()
+                # we assume that model file size is at least 1K
+                script.exports.run(1024)
+
+            setup_extract_by_scan_mem(session)
+            setup_extract_by_hook_deallocation(session)
+            frida_device.resume(pid)
 
         return result
 
@@ -103,6 +127,7 @@ class TensorFlowLiteDetector:
             try:
                 @concurrent.process(timeout=10)
                 def try_with_interpreter_internal(maybe_model: bytes) -> bool:
+                    # setup interpreter
                     interpreter = tf.lite.Interpreter(
                         model_content=maybe_model)
                     interpreter.allocate_tensors()
