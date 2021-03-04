@@ -4,11 +4,14 @@ from dataclasses import dataclass
 from collections import defaultdict
 from abc import abstractmethod
 from pebble import concurrent
+import time
 
 import tensorflow as tf
 import frida
 
+from .context import Context
 from . import util
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,7 @@ class ExtractedModel:
 
 
 class MLExtractor:
-    def __init__(self, context):
+    def __init__(self, context: Context):
         self.context = context
         # init extractors
         self.extractors: List[IExtractor] = [TensorFlowLiteDetector()]
@@ -60,6 +63,7 @@ class MLExtractor:
                 logger.warning("The application does not start as expected. app_path: {} pkg: {} err: {}".format(
                     self.context.apk_path, self.context.pkg_name, e))
 
+            # TODO: test for this
             def setup_extract_by_scan_mem(session):
                 def callback_on_message(msg, bs):
                     logger.debug(msg)
@@ -78,6 +82,7 @@ class MLExtractor:
                 script.on('message', callback_on_message)
                 script.load()
                 script.exports.run()
+            # TODO: test for this
 
             def setup_extract_by_hook_deallocation(session):
                 def callback_on_message(msg, bs):
@@ -98,7 +103,12 @@ class MLExtractor:
 
             setup_extract_by_scan_mem(session)
             setup_extract_by_hook_deallocation(session)
+            # for each detector call it's setup_hook_model_loading()
+            for extractor in self.extractors:
+                extractor.setup_hook_model_loading(context, session, result)
             frida_device.resume(pid)
+            # sleep 60 seconds
+            time.sleep(1)
 
         return result
 
@@ -110,6 +120,10 @@ class IExtractor:
 
     @abstractmethod
     def extract_model(self, buf: bytes) -> List[bytes]:
+        raise NotImplemented
+
+    @abstractmethod
+    def setup_hook_model_loading(self, context: Context, session, result):
         raise NotImplemented
 
 
@@ -158,3 +172,29 @@ class TensorFlowLiteDetector:
         if try_with_interpreter(maybe_model):
             models.add(maybe_model)
         return models
+
+    # TODO: test for this
+    # TODO: replace `result` with something else ?
+    def setup_hook_model_loading(self, context: Context, session, result):
+        def callback_on_message(msg, bs):
+            logger.debug(msg)
+            if 'model_data' in msg.payload:
+                model_string = "mem_hook_model_loading_{}_{}".format(
+                    msg['payload']['model_data'], msg['payload']['model_size'])
+                result[self.fw_type()].extend(
+                    map(lambda model: ExtractedModel(model, model_string),
+                        self.extract_model(bs, True))
+                )
+            elif 'model_path' in msg.payload:
+                model_path = msg['payload']['model_path']
+                model_string = "mem_hook_model_loading_{}".format(model_path)
+                ret, file_content = context.device.adb_read_file(model_path)
+                result[self.fw_type()].extend(
+                    map(lambda model: ExtractedModel(model, model_string),
+                        self.extract_model(file_content, True))
+                )
+        script = session.create_script(
+            util.read_frida_script('extractor_script_tflite_hook_model_create.js'))
+        script.on('message', callback_on_message)
+        script.load()
+        script.exports.run()

@@ -52,7 +52,11 @@ class Device:
     def adb_read_file(self, absolute_path) -> (int, bytes):
         logger.debug('device: {} read file absolute_path: {}'.format(
             self, absolute_path))
-        return self.adb_run('shell cat {}'.format(absolute_path), binary_output=True)
+        ret, content = self.adb_run('shell cat {}'.format(
+            absolute_path), binary_output=True)
+        logger.warning("device: {} read file failed with ret: {} absolute_path: {}".format(
+            ret, absolute_path))
+        return ret, content
 
     def adb_install_apk(self, apk_path: str) -> bool:
         logger.debug('device: {} install apk: {}'.format(self, apk_path))
