@@ -82,8 +82,8 @@ class MLExtractor:
                 script.on('message', callback_on_message)
                 script.load()
                 script.exports.run()
-            # TODO: test for this
 
+            # TODO: test for this
             def setup_extract_by_hook_deallocation(session):
                 def callback_on_message(msg, bs):
                     logger.debug(msg)
@@ -101,8 +101,35 @@ class MLExtractor:
                 # we assume that model file size is at least 1K
                 script.exports.run(1024)
 
+            # TODO: test for this
+            def setup_extract_by_hook_file_access(session):
+                # get data_dir
+                # TODO: better way to check ret here
+                ret, data_dir = device.adb_get_data_dir_of_pkg(
+                    'com.dsrtech.lipsy')
+                files_dir = '{}/files'.format(data_dir)
+
+                def callback_on_message(msg):
+                    logger.debug(msg)
+                    file_path = msg['payload']['file_path']
+                    # TODO: better way to check ret here
+                    ret, file_content = context.device.adb_read_file(file_path)
+                    model_string = "mem_hook_file_access_{}".format(file_path)
+                    for extractor in self.extractors:
+                        result[extractor.fw_type()].extend(
+                            map(lambda model: ExtractedModel(model, model_string),
+                                extractor.extract_model(file_content, False))
+                        )
+                script = session.create_script(
+                    util.read_frida_script('extractor_script_hook_file_access.js'))
+                script.on('message', callback_on_message)
+                script.load()
+                # we assume that model file size is at least 1K
+                script.exports.run([files_dir])
+
             setup_extract_by_scan_mem(session)
             setup_extract_by_hook_deallocation(session)
+            setup_extract_by_hook_file_access(session)
             # for each detector call it's setup_hook_model_loading()
             for extractor in self.extractors:
                 extractor.setup_hook_model_loading(context, session, result)
@@ -188,6 +215,7 @@ class TensorFlowLiteDetector:
             elif 'model_path' in msg.payload:
                 model_path = msg['payload']['model_path']
                 model_string = "mem_hook_model_loading_{}".format(model_path)
+                # TODO: better way to check ret here
                 ret, file_content = context.device.adb_read_file(model_path)
                 result[self.fw_type()].extend(
                     map(lambda model: ExtractedModel(model, model_string),

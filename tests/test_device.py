@@ -99,3 +99,32 @@ def test_device_adb_get_data_dir_of_pkg():
         assert data_dir == '/data/user/0/com.dsrtech.lipsy'
 
     get_device_then(callback)
+
+
+def test_device_hook_file_access():
+    def callback(device: Device):
+        # get data_dir
+        ret, data_dir = device.adb_get_data_dir_of_pkg('com.dsrtech.lipsy')
+        assert ret == 0
+        files_dir = '{}/files'.format(data_dir)
+        # spawn app and test script
+        d = device.frida_device
+        pid = d.spawn("com.dsrtech.lipsy")
+        session = d.attach(pid)
+        script = session.create_script(
+            util.read_frida_script('extractor_script_hook_file_access.js'))
+
+        def on_message(msg, bs):
+            logger.debug(msg)
+            # FIXME: fix exception in frida callback can was catch by frida-core, we need to throw out them
+            assert msg['payload']['file_path'].startswith('files_dir')
+
+        script.on('message', on_message)
+        script.load()
+        d.resume(pid)
+        script.exports.run([files_dir])
+        time.sleep(10)
+        script.unload()
+        session.detach()
+
+    get_device_then(callback)
