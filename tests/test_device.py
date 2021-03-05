@@ -16,20 +16,6 @@ def test_device_connect():
     get_device_then(lambda d: None)
 
 
-def test_device_read_file():
-    def callback(device: Device):
-        ret_1, file_content = device.adb_read_file(
-            '/data/local/tmp/frida-server')
-        ret_2, md5 = device.adb_run(
-            'shell md5sum -b /data/local/tmp/frida-server')
-        assert ret_1 == 0
-        assert ret_2 == 0
-        assert len(file_content) > 0
-        assert util.md5_of_bytes(file_content).lower() == md5.strip().lower()
-
-    get_device_then(callback)
-
-
 def get_device_then(callback):
     if 'CI' in os.environ:
         pytest.skip("CI environment detected. Skip device connect test.")
@@ -88,6 +74,28 @@ def test_device_hook_deallocation():
         time.sleep(1)
         script.unload()
         session.detach()
-        # print("here")
+
+    get_device_then(callback)
+
+
+def test_device_read_file():
+    def callback(device: Device):
+        ret_1, file_content = device.adb_read_file(
+            '/data/local/tmp/frida-server')
+        ret_2, md5 = device.adb_run(
+            'shell md5sum -b /data/local/tmp/frida-server')
+        assert ret_1 == 0
+        assert ret_2 == 0
+        assert len(file_content) > 0
+        assert util.md5_of_bytes(file_content).lower() == md5.strip().lower()
+
+    get_device_then(callback)
+
+
+def test_device_adb_get_data_dir_of_pkg():
+    def callback(device: Device):
+        ret, data_dir = device.adb_get_data_dir_of_pkg('com.dsrtech.lipsy')
+        assert ret == 0
+        assert data_dir == '/data/user/0/com.dsrtech.lipsy'
 
     get_device_then(callback)

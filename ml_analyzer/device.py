@@ -70,6 +70,12 @@ class Device:
         logger.debug('device: {} start pkg: {}'.format(self, pkg_name))
         return self.adb_run('adb shell monkey -p {} -c android.intent.category.LAUNCHER 1'.format(pkg_name))[0] == 0
 
+    def adb_get_data_dir_of_pkg(self,  pkg_name: str) -> (int, str):
+        ret, infos = self.adb_run("shell dumpsys package {}".format(pkg_name))
+        data_dir = list(map(lambda x: x.split(sep='dataDir=', maxsplit=1)
+                            [-1], filter(lambda x: 'dataDir=' in x, infos.splitlines())))[0]
+        return ret, data_dir
+
     def __repr__(self):
         return '<Device adb_serial={}>'.format(self.adb_serial)
 
