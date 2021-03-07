@@ -2,6 +2,7 @@ import logging
 import warnings
 import os
 import time
+from contextlib import AbstractContextManager
 
 import pytest
 import frida
@@ -17,7 +18,7 @@ package_name = 'org.tensorflow.lite.examples.classification'
 
 
 def test_device_connect():
-    get_device_then(lambda d: None)
+    get_device_then(lambda ec, device: None)
 
 
 def get_device_then(callback):
@@ -31,11 +32,30 @@ def get_device_then(callback):
             warnings.warn(
                 "Test device connect failed with error: {}".format(e))
         else:
-            callback(device)
+            ec = ErrorCollector()
+            callback(ec, device)
+            ec.raises()
+
+
+class ErrorCollector(AbstractContextManager):
+    def __init__(self):
+        super().__init__()
+        self.errors = []
+
+    def __exit__(self, exc_type, exc_val, traceback):
+        if exc_type:
+            self.errors.append((exc_type, exc_val, traceback))
+            return True
+
+    def raises(self):
+        if len(self.errors) > 0:
+            exc_type, exc_val, traceback = self.errors[0]
+            self.errors = self.errors[1:]
+            raise exc_val
 
 
 def test_device_enumerate_ranges():
-    def callback(device: Device):
+    def callback(ec: ErrorCollector, device: Device):
         d = device.frida_device
         pid = d.spawn(package_name)
         session = d.attach(pid)
@@ -44,7 +64,8 @@ def test_device_enumerate_ranges():
 
         def on_message(msg, bs):
             logger.debug(msg)
-            assert len(bs) == msg['payload']['size']
+            with ec:
+                assert len(bs) == msg['payload']['size']
         script.on('message', on_message)
         script.load()
         d.resume(pid)
@@ -55,7 +76,7 @@ def test_device_enumerate_ranges():
 
 
 def test_device_hook_deallocation():
-    def callback(device: Device):
+    def callback(ec: ErrorCollector, device: Device):
         # we assume that model file size is at least 1K
         min_model_size = 1024
 
@@ -67,9 +88,10 @@ def test_device_hook_deallocation():
 
         def on_message(msg, bs):
             logger.debug(msg)
-            assert int(msg['payload']['pointer'], 16) != 0
-            assert int(msg['payload']['size']) >= min_model_size
-            assert len(bs) == msg['payload']['size']
+            with ec:
+                assert int(msg['payload']['pointer'], 16) != 0
+                assert int(msg['payload']['size']) >= min_model_size
+                assert len(bs) == int(msg['payload']['size'])
 
         script.on('message', on_message)
 
@@ -84,7 +106,7 @@ def test_device_hook_deallocation():
 
 
 def test_device_read_file():
-    def callback(device: Device):
+    def callback(ec: ErrorCollector, device: Device):
         ret_1, file_content = device.adb_read_file(
             '/data/local/tmp/frida-server')
         ret_2, md5 = device.adb_run(
@@ -98,7 +120,7 @@ def test_device_read_file():
 
 
 def test_device_adb_get_data_dir_of_pkg():
-    def callback(device: Device):
+    def callback(ec: ErrorCollector, device: Device):
         ret, data_dir = device.adb_get_data_dir_of_pkg(package_name)
         assert ret == 0
         assert data_dir == '/data/user/0/{}'.format(package_name)
@@ -107,7 +129,7 @@ def test_device_adb_get_data_dir_of_pkg():
 
 
 def test_device_hook_file_access():
-    def callback(device: Device):
+    def callback(ec: ErrorCollector, device: Device):
         # get data_dir
         ret, data_dir = device.adb_get_data_dir_of_pkg(package_name)
         assert ret == 0
@@ -121,8 +143,8 @@ def test_device_hook_file_access():
 
         def on_message(msg, bs):
             logger.debug(msg)
-            # FIXME: fix exception in frida callback can was catch by frida-core, we need to throw out them
-            assert msg['payload']['file_path'].startswith('files_dir')
+            with ec:
+                assert msg['payload']['file_path'].startswith('files_dir')
 
         script.on('message', on_message)
         script.load()

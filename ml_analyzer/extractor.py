@@ -131,7 +131,8 @@ class MLExtractor:
             setup_extract_by_hook_file_access(self.context, session)
             # for each detector call it's setup_hook_model_loading()
             for extractor in self.extractors:
-                extractor.setup_hook_model_loading(self.context, session, result)
+                extractor.setup_hook_model_loading(
+                    self.context, session, result)
             frida_device.resume(pid)
             # sleep 60 seconds
             time.sleep(1)
