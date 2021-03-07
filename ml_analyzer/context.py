@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import hashlib
 
@@ -6,8 +8,8 @@ from androguard.core.bytecodes.apk import APK
 from androguard.core.bytecodes.dvm import DalvikVMFormat
 from androguard.core.analysis.analysis import Analysis
 
-from . import util
-from .device import Device
+from ml_analyzer import util
+from ml_analyzer.device import Device
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +27,12 @@ class Context:
         androguard_analysis: A instance of `androguard.core.analysis.analysis.Analysis`.
     """
 
-    def __init__(self, apk_path: str, device: Device):
+    def __init__(self):
+        pass
+
+    def with_apk(self, apk_path: str) -> Context:
+        logger.info("Generating info for apk: {}".format(apk_path))
         self.apk_path: str = apk_path
-        self.device: Device = device
         # analyze using androguard
         a, d, dx = misc.AnalyzeAPK(apk_path)
         self.androguard_apk: APK = a
@@ -36,15 +41,22 @@ class Context:
         # calculate md5 of apk file
         with open(apk_path, 'rb') as f:
             self.apk_sha1 = util.sha1_of_bytes(f.read())
+        logger.info("Generate info for apk finished")
+        return self
+
+    def with_device(self, adb_serial: str = None) -> Context:
+        device = Device(adb_serial=adb_serial)
+        self.device: Device = device
+        return self
 
     @property
     def package_name(self) -> str:
-        return self.androguard_apk.package
+        return self.androguard_apk.package if hasattr(self, 'androguard_apk') else None
 
     @property
     def sha1(self) -> str:
-        return self.apk_sha1
+        return self.apk_sha1 if hasattr(self, 'apk_sha1') else None
 
     def describe(self):
-        logger.info("package: {}".format(self.androguard_apk.package))
-        logger.info("SHA1: {}".format(self.apk_sha1))
+        logger.info("package: {}".format(self.package_name))
+        logger.info("SHA1: {}".format(self.sha1))

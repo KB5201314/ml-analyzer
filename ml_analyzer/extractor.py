@@ -6,11 +6,10 @@ from abc import abstractmethod
 from pebble import concurrent
 import time
 
-import tensorflow as tf
 import frida
 
-from .context import Context
-from . import util
+from ml_analyzer.context import Context
+from ml_analyzer import util
 
 
 logger = logging.getLogger(__name__)
@@ -48,23 +47,23 @@ class MLExtractor:
                         extractor.extract_model(bs, False))
                 )
         # extract model by run apk on device
-        self.context.device.adb_uninstall_pkg(self.context.pkg_name)
+        self.context.device.adb_uninstall_pkg(self.context.package_name)
         if not self.context.device.adb_install_apk(self.context.apk_path):
             logger.warning("failed to install apk. app_path: {} pkg: {}".format(
-                self.context.apk_path, self.context.pkg_name))
+                self.context.apk_path, self.context.package_name))
         else:
             # spawn application program
             frida_device: frida.core.Device = self.context.device.frida_device
             try:
-                pid = frida_device.spawn(self.context.pkg_name)
+                pid = frida_device.spawn(self.context.package_name)
                 # TODO: what about child process ?
                 session = frida_device.attach(pid)
             except Exception as e:
                 logger.warning("The application does not start as expected. app_path: {} pkg: {} err: {}".format(
-                    self.context.apk_path, self.context.pkg_name, e))
+                    self.context.apk_path, self.context.package_name, e))
 
             # TODO: test for this
-            def setup_extract_by_scan_mem(session):
+            def setup_extract_by_scan_mem(context, session):
                 def callback_on_message(msg, bs):
                     logger.debug(msg)
                     model_string = "mem_scan_{}_{}".format(
@@ -84,7 +83,7 @@ class MLExtractor:
                 script.exports.run()
 
             # TODO: test for this
-            def setup_extract_by_hook_deallocation(session):
+            def setup_extract_by_hook_deallocation(context, session):
                 def callback_on_message(msg, bs):
                     logger.debug(msg)
                     model_string = "mem_hook_deallocation_{}_{}".format(
@@ -102,11 +101,11 @@ class MLExtractor:
                 script.exports.run(1024)
 
             # TODO: test for this
-            def setup_extract_by_hook_file_access(session):
+            def setup_extract_by_hook_file_access(context, session):
                 # get data_dir
                 # TODO: better way to check ret here
-                ret, data_dir = device.adb_get_data_dir_of_pkg(
-                    'com.dsrtech.lipsy')
+                ret, data_dir = context.device.adb_get_data_dir_of_pkg(
+                    context.package_name)
                 files_dir = '{}/files'.format(data_dir)
 
                 def callback_on_message(msg):
@@ -127,12 +126,12 @@ class MLExtractor:
                 # we assume that model file size is at least 1K
                 script.exports.run([files_dir])
 
-            setup_extract_by_scan_mem(session)
-            setup_extract_by_hook_deallocation(session)
-            setup_extract_by_hook_file_access(session)
+            setup_extract_by_scan_mem(self.context, session)
+            setup_extract_by_hook_deallocation(self.context, session)
+            setup_extract_by_hook_file_access(self.context, session)
             # for each detector call it's setup_hook_model_loading()
             for extractor in self.extractors:
-                extractor.setup_hook_model_loading(context, session, result)
+                extractor.setup_hook_model_loading(self.context, session, result)
             frida_device.resume(pid)
             # sleep 60 seconds
             time.sleep(1)
@@ -162,6 +161,8 @@ class TensorFlowLiteDetector:
         return 'TensorFlow Lite'
 
     def extract_model(self, buf: bytes, is_exactly: bool) -> Set[bytes]:
+        import tensorflow as tf
+
         def try_with_interpreter(maybe_model: bytes) -> bool:
             logger.debug("try_with_interpreter for a maybe_model. size: {}, content: {}...,".format(
                 len(maybe_model), maybe_model[:8]))

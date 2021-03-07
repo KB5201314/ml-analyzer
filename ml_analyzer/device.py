@@ -19,12 +19,14 @@ class Device:
     """
 
     def __init__(self, adb_serial=None):
+        logger.info(
+            "Connecting to device with adb_serial: {}".format(adb_serial))
         self.adb_serial = adb_serial
         # try connect via adb
-        ret, _ = self.adb_run('shell')
+        ret, _ = self.adb_run('shell exit')
         if ret != 0:
             raise RuntimeError(
-                'device is not connected via `adb`. adb_serial: `{}`, return value is {}'.format(self.adb_serial, ret))
+                'device is not connected via `adb`. adb_serial: `{}`, return value of `adb shell` is {}'.format(self.adb_serial, ret))
         # try connect via frida
         try:
             if adb_serial != None:
@@ -38,6 +40,7 @@ class Device:
         except frida.InvalidArgumentError as e:
             raise RuntimeError(
                 'device is not connected via `frida`, please check whether frida\'s output contains devices with adb_serial: `{}`'.format(self.adb_serial)) from e
+        logger.info("Device connected. adb_serial: {}".format(adb_serial))
 
     def adb_run(self, cmd: str, binary_output=False) -> (int, bytes):
         if self.adb_serial == None:
@@ -54,13 +57,13 @@ class Device:
             self, absolute_path))
         ret, content = self.adb_run('shell cat {}'.format(
             absolute_path), binary_output=True)
-        logger.warning("device: {} read file failed with ret: {} absolute_path: {}".format(
-            ret, absolute_path))
+        logger.debug("device: {} read file failed with ret: {} absolute_path: {}".format(self,
+                                                                                         ret, absolute_path))
         return ret, content
 
     def adb_install_apk(self, apk_path: str) -> bool:
         logger.debug('device: {} install apk: {}'.format(self, apk_path))
-        return self.adb_run('install {}'.format(apk_path))[0] == 0
+        return self.adb_run('install -r {}'.format(apk_path))[0] == 0
 
     def adb_uninstall_pkg(self, pkg_name: str) -> bool:
         logger.debug('device: {} uninstall pkg: {}'.format(self, pkg_name))

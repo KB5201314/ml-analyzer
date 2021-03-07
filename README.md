@@ -1,6 +1,6 @@
 # ml-analyzer
 
-The goal of this project is to implement an ML model analysis framework. Extract the model in the apk and attack the experiment.
+The goal of this project is to implement a ML model analysis framework. To extract the model in the APK and perform some simple attack experiments.
 
 
 # How to start
@@ -22,9 +22,40 @@ Before running, we need to spawn a `pipenv` shell environment first:
 ```shell
 pipenv shell
 ``` 
-Now, let's run `ml-analyzer` by: 
+
+
+Now you can get help message of `ml-analyzer` tool by:
+```sh
+python main.py --help
 ```
-python ./ml_analyzer/main.py
+
+```text
+usage: ml-analyzer [-h] [--adb-serial ADB_SERIAL] {detect,extract,run} ...
+
+A ML model analysis framework.
+
+positional arguments:
+  {detect,extract,run}  sub-command help
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --adb-serial ADB_SERIAL
+                        A serial number which can be used to identify a
+                        connected android device. can be found in `adb device
+                        -l`.
+
+```
+
+### detect ML framework
+
+```sh
+python main.py detect --apk ./tests/apks/tflite_example_image_classification.apk
+```
+
+### extract ML framework
+
+```sh
+python main.py extract --apk ./tests/apks/tflite_example_image_classification.apk
 ```
 
 ## Test
@@ -37,3 +68,6 @@ Just enter the `pipenv` shell and run:
 pytest --log-cli-level DEBUG
 ```
 
+## Scripts
+
+There are some tools that can be used in the process in the `scripts` directory

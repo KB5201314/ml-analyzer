@@ -7,7 +7,7 @@ from collections import defaultdict
 from androguard.core.bytecodes.dvm import DalvikVMFormat
 import lief
 
-from .context import Context
+from ml_analyzer.context import Context
 
 logger = logging.getLogger(__name__)
 

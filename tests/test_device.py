@@ -12,6 +12,10 @@ from ml_analyzer import util
 logger = logging.getLogger(__name__)
 
 
+apk_path = 'tests/apks/tflite_example_image_classification.apk'
+package_name = 'org.tensorflow.lite.examples.classification'
+
+
 def test_device_connect():
     get_device_then(lambda d: None)
 
@@ -22,6 +26,7 @@ def get_device_then(callback):
     else:
         try:
             device = Device()
+            device.adb_install_apk(apk_path)
         except Exception as e:
             warnings.warn(
                 "Test device connect failed with error: {}".format(e))
@@ -32,7 +37,7 @@ def get_device_then(callback):
 def test_device_enumerate_ranges():
     def callback(device: Device):
         d = device.frida_device
-        pid = d.spawn("com.dsrtech.lipsy")
+        pid = d.spawn(package_name)
         session = d.attach(pid)
         script = session.create_script(
             util.read_frida_script('extractor_script_enumerate_ranges.js'))
@@ -55,7 +60,7 @@ def test_device_hook_deallocation():
         min_model_size = 1024
 
         d = device.frida_device
-        pid = d.spawn("com.dsrtech.lipsy")
+        pid = d.spawn(package_name)
         session = d.attach(pid)
         script = session.create_script(
             util.read_frida_script('extractor_script_hook_deallocation.js'))
@@ -94,9 +99,9 @@ def test_device_read_file():
 
 def test_device_adb_get_data_dir_of_pkg():
     def callback(device: Device):
-        ret, data_dir = device.adb_get_data_dir_of_pkg('com.dsrtech.lipsy')
+        ret, data_dir = device.adb_get_data_dir_of_pkg(package_name)
         assert ret == 0
-        assert data_dir == '/data/user/0/com.dsrtech.lipsy'
+        assert data_dir == '/data/user/0/{}'.format(package_name)
 
     get_device_then(callback)
 
@@ -104,12 +109,12 @@ def test_device_adb_get_data_dir_of_pkg():
 def test_device_hook_file_access():
     def callback(device: Device):
         # get data_dir
-        ret, data_dir = device.adb_get_data_dir_of_pkg('com.dsrtech.lipsy')
+        ret, data_dir = device.adb_get_data_dir_of_pkg(package_name)
         assert ret == 0
         files_dir = '{}/files'.format(data_dir)
         # spawn app and test script
         d = device.frida_device
-        pid = d.spawn("com.dsrtech.lipsy")
+        pid = d.spawn(package_name)
         session = d.attach(pid)
         script = session.create_script(
             util.read_frida_script('extractor_script_hook_file_access.js'))
