@@ -31,7 +31,6 @@ def parse_args():
 
 
 def run():
-    logger.setLevel(logging.DEBUG)
     args = parse_args()
 
     logger.info('Program running with args: {}'.format(args))
@@ -54,7 +53,11 @@ def run():
         logger.info("Extracting ML model for apk: {}".format(args.apk))
         extractor = MLExtractor(context)
         extract_results = extractor.extract()
-        logger.debug("Extracting ML model result: {}".format(extract_results))
+        logger.debug("Extracting ML model result:")
+        for fw_type, models in extract_results.items():
+            logger.info('{}:'.format(fw_type))
+            for model in models:
+                logger.info('{}:'.format(model))
 
     elif args.subcommand == 'run':
         context = Context()
@@ -63,6 +66,7 @@ def run():
 if __name__ == "__main__":
     # init logging
     logging.basicConfig(
-        format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+        format='%(asctime)s - %(levelname)s - %(message)s', level=logging.WARNING)
     logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
     run()

@@ -4,6 +4,7 @@ import delegator
 import frida
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class Device:

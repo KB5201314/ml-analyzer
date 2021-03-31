@@ -12,6 +12,7 @@ from ml_analyzer import util
 from ml_analyzer.device import Device
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Context:

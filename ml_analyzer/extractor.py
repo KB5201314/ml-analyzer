@@ -13,6 +13,7 @@ from ml_analyzer import util
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 @dataclass
@@ -61,6 +62,15 @@ class MLExtractor:
             except Exception as e:
                 logger.warning("The application does not start as expected. app_path: {} pkg: {} err: {}".format(
                     self.context.apk_path, self.context.package_name, e))
+
+
+            # TODO(2020-03-08): Determine the time to extract
+            # FIXME(2020-03-08): cannot stop program
+
+
+
+
+
 
             # TODO: test for this
             def setup_extract_by_scan_mem(context, session):
@@ -135,7 +145,8 @@ class MLExtractor:
                     self.context, session, result)
             frida_device.resume(pid)
             # sleep 60 seconds
-            time.sleep(1)
+            time.sleep(20)
+            session.detach()
 
         return result
 

@@ -10,7 +10,7 @@ import lief
 from ml_analyzer.context import Context
 
 logger = logging.getLogger(__name__)
-
+logger.setLevel(logging.INFO)
 
 @dataclass
 class DetectEvidence:
