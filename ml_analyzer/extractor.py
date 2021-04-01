@@ -13,7 +13,7 @@ from ml_analyzer import util
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 @dataclass
@@ -53,6 +53,10 @@ class MLExtractor:
             logger.warning("failed to install apk. app_path: {} pkg: {}".format(
                 self.context.apk_path, self.context.package_name))
         else:
+            # grant all permissions
+            for p in self.context.permissions:
+                self.context.device.adb_grant_permission(
+                    self.context.package_name, p)
             # spawn application program
             frida_device: frida.core.Device = self.context.device.frida_device
             try:
@@ -60,18 +64,12 @@ class MLExtractor:
                 # TODO: what about child process ?
                 session = frida_device.attach(pid)
             except Exception as e:
-                logger.warning("The application does not start as expected. app_path: {} pkg: {} err: {}".format(
+                logger.error("The application does not start as expected. app_path: {} pkg: {} err: {}".format(
                     self.context.apk_path, self.context.package_name, e))
+                return result
 
-
-            # TODO(2020-03-08): Determine the time to extract
+            # TODO: Determine the time to extract
             # FIXME(2020-03-08): cannot stop program
-
-
-
-
-
-
             # TODO: test for this
             def setup_extract_by_scan_mem(context, session):
                 def callback_on_message(msg, bs):

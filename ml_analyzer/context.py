@@ -58,6 +58,11 @@ class Context:
     def sha1(self) -> str:
         return self.apk_sha1 if hasattr(self, 'apk_sha1') else None
 
+    # TODO: add test for this
+    @property
+    def permissions(self) -> [str]:
+        return self.androguard_apk.permissions if hasattr(self, 'androguard_apk') else None
+
     def describe(self):
         logger.info("package: {}".format(self.package_name))
         logger.info("SHA1: {}".format(self.sha1))
