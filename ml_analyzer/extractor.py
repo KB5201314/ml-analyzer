@@ -7,6 +7,7 @@ from pebble import concurrent
 import time
 
 import frida
+import androguard.decompiler.dad.util as androguard_util
 
 from ml_analyzer.context import Context
 from ml_analyzer import util
@@ -134,9 +135,41 @@ class MLExtractor:
                 # we assume that model file size is at least 1K
                 script.exports.run([files_dir])
 
+            # TODO: test for this
+            def setup_extract_by_hook_native_call(context, session):
+                # get all native methods
+                native_methods = []
+                for dex in self.context.androguard_dexs:
+                    for method in dex.get_methods():
+                        # should be native method
+                        if method.get_access_flags() & 0b100000000 == 0:
+                            continue
+                        native_methods.append([util.parse_descriptor_for_frida(method.get_class_name()), method.get_name(), [
+                            util.parse_descriptor_for_frida(p) for p in androguard_util.get_params_type(method.get_descriptor())]])
+                # logger.debug('native_methods: {}'.format(native_methods))
+
+                def callback_on_message(msg, bs):
+                    logger.debug(msg)
+                    file_content = bs
+                    # TODO: better way to check ret here
+                    model_string = "mem_hook_native_call"
+                    for extractor in self.extractors:
+                        result[extractor.fw_type()].extend(
+                            map(lambda model: ExtractedModel(model, model_string),
+                                extractor.extract_model(file_content, True))
+                        )
+                script = session.create_script(
+                    util.read_frida_script('extractor_script_hook_native_call.js'))
+                script.on('message', callback_on_message)
+                script.load()
+                # we assume that model file size is at least 1K
+                script.exports.run(native_methods)
+
             setup_extract_by_scan_mem(self.context, session)
             setup_extract_by_hook_deallocation(self.context, session)
             setup_extract_by_hook_file_access(self.context, session)
+            setup_extract_by_hook_native_call(self.context, session)
+
             # for each detector call it's setup_hook_model_loading()
             for extractor in self.extractors:
                 extractor.setup_hook_model_loading(
