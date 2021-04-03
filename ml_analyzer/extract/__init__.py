@@ -3,7 +3,6 @@ from typing import List, Dict, Set, Any, Tuple
 from dataclasses import dataclass
 from collections import defaultdict
 from abc import abstractmethod
-from pebble import concurrent
 import time
 
 import frida

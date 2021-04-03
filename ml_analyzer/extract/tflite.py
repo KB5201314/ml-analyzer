@@ -2,6 +2,7 @@ import logging
 from typing import List, Dict, Set, Any, Tuple
 
 from ml_analyzer import util
+from pebble import concurrent
 
 from .base import ExtractedModel, IExtractor
 from ml_analyzer.context import Context
@@ -23,13 +24,14 @@ class TensorFlowLiteExtractor(IExtractor):
         def try_with_interpreter(maybe_model: bytes) -> bool:
             logger.debug("try_with_interpreter for a maybe_model. size: {}, content: {}...,".format(
                 len(maybe_model), maybe_model[:8]))
+
+            @concurrent.process(timeout=10)
+            def try_with_interpreter_internal(maybe_model: bytes) -> bool:
+                # setup interpreter
+                interpreter = tf.lite.Interpreter(
+                    model_content=maybe_model)
+                interpreter.allocate_tensors()
             try:
-                @concurrent.process(timeout=10)
-                def try_with_interpreter_internal(maybe_model: bytes) -> bool:
-                    # setup interpreter
-                    interpreter = tf.lite.Interpreter(
-                        model_content=maybe_model)
-                    interpreter.allocate_tensors()
                 future = try_with_interpreter_internal(maybe_model)
                 future.result()
                 return True
