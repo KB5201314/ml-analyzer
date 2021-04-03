@@ -4,8 +4,8 @@ import logging
 import argparse
 
 from ml_analyzer.context import Context
-from ml_analyzer.detector import MLDetector
-from ml_analyzer.extractor import MLExtractor
+from ml_analyzer.detect import MLDetector
+from ml_analyzer.extract import MLExtractor
 from ml_analyzer.device import Device
 
 
