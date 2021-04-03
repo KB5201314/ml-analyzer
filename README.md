@@ -1,4 +1,4 @@
-# ml-analyzer
+# ml-analyzer [![](https://github.com/KB5201314/ml-analyzer/workflows/CI/badge.svg)](https://github.com/KB5201314/ml-analyzer)
 
 The goal of this project is to implement a ML model analysis framework. To extract the model in the APK and perform some simple attack experiments.
 
