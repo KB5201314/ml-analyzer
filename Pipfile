@@ -7,7 +7,7 @@ name = "pypi"
 androguard = "*"
 lief = "*"
 netron = "*"
-tensorflow = "*"
+tensorflow = "2.4.1"
 pytest = "*"
 pebble = "*"
 install = "*"
@@ -16,6 +16,7 @@ frida = "*"
 peewee = "*"
 
 [dev-packages]
+pylint = "*"
 
 [requires]
 python_version = "3.7.7"

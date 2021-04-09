@@ -6,6 +6,8 @@ from enum import Enum, auto
 from androguard.core.bytecodes.dvm import DalvikVMFormat
 import lief
 
+from ml_analyzer.mlfw import MLFrameworkType
+
 
 class EvidenceType(Enum):
     SO_FILE = auto()
@@ -20,14 +22,14 @@ class DetectEvidence:
 
 class IDetector:
     @abstractmethod
-    def fw_type(self) -> str:
-        raise NotImplemented
+    def fw_type(self) -> MLFrameworkType:
+        raise NotImplementedError
 
 # TODO: should we report detected symbols
     @abstractmethod
     def detect_dot_so_file(self, elf: lief.ELF.Binary) -> bool:
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def detect_dex(self, dex: DalvikVMFormat) -> bool:
-        raise NotImplemented
+        raise NotImplementedError

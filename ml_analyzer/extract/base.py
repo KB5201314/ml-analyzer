@@ -4,6 +4,7 @@ from abc import abstractmethod
 from enum import Enum, auto
 
 from ml_analyzer.context import Context
+from ml_analyzer.mlfw import MLFrameworkType
 
 
 class SourceType(Enum):
@@ -31,13 +32,13 @@ class ExtractedModel:
 
 class IExtractor:
     @abstractmethod
-    def fw_type(self) -> str:
-        raise NotImplemented
+    def fw_type(self) -> MLFrameworkType:
+        raise NotImplementedError
 
     @abstractmethod
     def extract_model(self, buf: bytes) -> List[bytes]:
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def setup_hook_model_loading(self, context: Context, session, result):
-        raise NotImplemented
+        raise NotImplementedError
