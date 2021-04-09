@@ -10,7 +10,7 @@ import androguard.decompiler.dad.util as androguard_util
 
 from ml_analyzer.context import Context
 from ml_analyzer import util
-from .base import ExtractedModel
+from .base import ExtractedModel, SourceType
 from .tflite import TensorFlowLiteExtractor
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class MLExtractor:
             bs = self.context.androguard_apk.get_file(file_name)
             for extractor in self.extractors:
                 result[extractor.fw_type()].extend(
-                    map(lambda model: ExtractedModel(model, file_name),
+                    map(lambda model: ExtractedModel(SourceType.ASSETS_FILE, model, file_name),
                         extractor.extract_model(bs, False))
                 )
         # extract model by run apk on device
@@ -87,7 +87,7 @@ class MLExtractor:
                     model_string, msg['payload']['file']['path'])
             for extractor in self.extractors:
                 result[extractor.fw_type()].extend(
-                    map(lambda model: ExtractedModel(model, model_string),
+                    map(lambda model: ExtractedModel(SourceType.MEM_SCAN, model, model_string),
                         extractor.extract_model(bs, False))
                 )
         script = session.create_script(
@@ -105,7 +105,7 @@ class MLExtractor:
                 msg['payload']['pointer'], msg['payload']['size'])
             for extractor in self.extractors:
                 result[extractor.fw_type()].extend(
-                    map(lambda model: ExtractedModel(model, model_string),
+                    map(lambda model: ExtractedModel(SourceType.HOOK_DEALLOCATION, model, model_string),
                         extractor.extract_model(bs, True))
                 )
         script = session.create_script(
@@ -131,7 +131,7 @@ class MLExtractor:
             model_string = "mem_hook_file_access_{}".format(file_path)
             for extractor in self.extractors:
                 result[extractor.fw_type()].extend(
-                    map(lambda model: ExtractedModel(model, model_string),
+                    map(lambda model: ExtractedModel(SourceType.HOOK_FILE_ACCESS, model, model_string),
                         extractor.extract_model(file_content, False))
                 )
         script = session.create_script(
@@ -161,7 +161,7 @@ class MLExtractor:
             model_string = "mem_hook_native_call"
             for extractor in self.extractors:
                 result[extractor.fw_type()].extend(
-                    map(lambda model: ExtractedModel(model, model_string),
+                    map(lambda model: ExtractedModel(SourceType.HOOK_NATIVE_CALL, model, model_string),
                         extractor.extract_model(file_content, True))
                 )
         script = session.create_script(

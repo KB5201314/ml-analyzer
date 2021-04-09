@@ -5,7 +5,7 @@ from collections import defaultdict
 import lief
 
 from ml_analyzer.context import Context
-from .base import DetectEvidence
+from .base import DetectEvidence, EvidenceType
 from .tflite import TensorFlowLiteDetector
 
 logger = logging.getLogger(__name__)
@@ -28,11 +28,11 @@ class MLDetector:
             for detector in self.detectors:
                 if detector.detect_dot_so_file(elf):
                     result[detector.fw_type()].append(
-                        DetectEvidence("so_file", file_name))
+                        DetectEvidence(EvidenceType.SO_FILE, file_name))
         # detect by java classes
         for idx, dex in enumerate(self.context.androguard_dexs):
             for detector in self.detectors:
                 if detector.detect_dex(dex):
                     result[detector.fw_type()].append(
-                        DetectEvidence("dex", 'classes{}.dex'.format('' if idx == 0 else (idx + 1))))
+                        DetectEvidence(EvidenceType.DEX_FILE, 'classes{}.dex'.format('' if idx == 0 else (idx + 1))))
         return result

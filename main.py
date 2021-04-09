@@ -4,7 +4,7 @@ import logging
 import argparse
 
 from ml_analyzer.context import Context, ContextBuilder
-from ml_analyzer.storage import DEAFULT_DATA_DIR
+from ml_analyzer.storage.manager import StorageManager, DEAFULT_DATA_DIR
 from ml_analyzer.detect import MLDetector
 from ml_analyzer.extract import MLExtractor
 from ml_analyzer.device import Device
@@ -50,6 +50,7 @@ def run():
             logger.info('{}:'.format(fw_type))
             for evidence in evidences:
                 logger.info('{}:'.format(evidence))
+        context.storage.save_detect_framework_results(context, detect_results)
 
     elif args.subcommand == 'extract':
         context = ContextBuilder().with_data_dir(args.data_dir).with_apk(
@@ -63,6 +64,7 @@ def run():
             logger.info('{}:'.format(fw_type))
             for model in models:
                 logger.info('{}:'.format(model))
+        context.storage.save_extract_model_results(context, extract_results)
 
     elif args.subcommand == 'run':
         context = Context().with_data_dir(args.data_dir).build()

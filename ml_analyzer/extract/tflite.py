@@ -4,7 +4,7 @@ from typing import List, Dict, Set, Any, Tuple
 from ml_analyzer import util
 from pebble import concurrent
 
-from .base import ExtractedModel, IExtractor
+from .base import ExtractedModel, SourceType, IExtractor
 from ml_analyzer.context import Context
 
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class TensorFlowLiteExtractor(IExtractor):
                 model_string = "mem_hook_model_loading_{}_{}".format(
                     msg['payload']['model_data'], msg['payload']['model_size'])
                 result[self.fw_type()].extend(
-                    map(lambda model: ExtractedModel(model, model_string),
+                    map(lambda model: ExtractedModel(SourceType.HOOK_MODEL_LOAD, model, model_string),
                         self.extract_model(bs, True))
                 )
             elif 'model_path' in msg.payload:
@@ -78,7 +78,7 @@ class TensorFlowLiteExtractor(IExtractor):
                 # TODO: better way to check ret here
                 ret, file_content = context.device.adb_read_file(model_path)
                 result[self.fw_type()].extend(
-                    map(lambda model: ExtractedModel(model, model_string),
+                    map(lambda model: ExtractedModel(SourceType.HOOK_MODEL_LOAD, model, model_string),
                         self.extract_model(file_content, True))
                 )
         script = session.create_script(

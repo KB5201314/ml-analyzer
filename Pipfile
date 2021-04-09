@@ -13,6 +13,7 @@ pebble = "*"
 install = "*"
 "delegator.py" = "*"
 frida = "*"
+peewee = "*"
 
 [dev-packages]
 

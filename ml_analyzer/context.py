@@ -10,7 +10,7 @@ from androguard.core.analysis.analysis import Analysis
 
 from ml_analyzer import util
 from ml_analyzer.device import Device
-from ml_analyzer.storage import StorageManager, DEAFULT_DATA_DIR
+from ml_analyzer import storage
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -37,7 +37,8 @@ class Context:
         self.apk_path: str = apk_path
         # calculate md5 of apk file
         with open(apk_path, 'rb') as f:
-            self.apk_sha1 = util.sha1_of_bytes(f.read())
+            self._apk_bytes = f.read()
+        self.apk_sha1 = util.sha1_of_bytes(self._apk_bytes)
         # TODO: test this
         # try to load androguard cache
         r = self.storage.read_androguard_result(self.apk_sha1)
@@ -45,7 +46,7 @@ class Context:
             logger.info(
                 'androguard cache not exist, so we perform analysis now')
             # analyze using androguard
-            a, d, dx = misc.AnalyzeAPK(apk_path)
+            a, d, dx = misc.AnalyzeAPK(self._apk_bytes, raw=True)
             self.androguard_apk: APK = a
             self.androguard_dexs: List[DalvikVMFormat] = d
             self.androguard_analysis: Analysis = dx
@@ -57,6 +58,8 @@ class Context:
         self.androguard_apk = r[0]
         self.androguard_analysis = r[1]
         self.androguard_dexs = self.androguard_analysis.vms
+        logger.info("Save generated apk info")
+        self.storage.save_apk(self)
         logger.info("Generate info for apk finished")
         return self
 
@@ -66,7 +69,7 @@ class Context:
         return self
 
     def __set_data_dir(self, data_dir: str) -> Context:
-        self.storage = StorageManager(data_dir)
+        self.storage: StorageManager = storage.manager.StorageManager(data_dir)
         return self
 
     @property
@@ -76,6 +79,10 @@ class Context:
     @property
     def sha1(self) -> str:
         return self.apk_sha1 if hasattr(self, 'apk_sha1') else None
+
+    @property
+    def apk_bytes(self) -> bytes:
+        return self._apk_bytes
 
     # TODO: add test for this
     @property
@@ -89,7 +96,7 @@ class Context:
 
 class ContextBuilder:
     def __init__(self):
-        self.data_dir: str = DEAFULT_DATA_DIR
+        self.data_dir: str = storage.manager.DEAFULT_DATA_DIR
         self.adb_serial: str = None
         self.apk_path: str = None
 

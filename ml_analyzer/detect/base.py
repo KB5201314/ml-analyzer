@@ -1,14 +1,20 @@
 from typing import Any
 from dataclasses import dataclass
 from abc import abstractmethod
+from enum import Enum, auto
 
 from androguard.core.bytecodes.dvm import DalvikVMFormat
 import lief
 
 
+class EvidenceType(Enum):
+    SO_FILE = auto()
+    DEX_FILE = auto()
+
+
 @dataclass
 class DetectEvidence:
-    clazz: str
+    evidence_type: EvidenceType
     value: Any
 
 
