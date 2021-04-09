@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 def test_tflite_extract_model():
     model_path = 'tests/models/mobilenet_v1_1.0_224_quant.tflite'
     bs = open(model_path, 'rb').read()
-    ext = extract.tflite.TensorFlowLiteExtractor()
+    ext = extract.tflite.TFLiteExtractor()
     # test normal tflite model (with b'TFL3' as magic number)
     models = ext.extract_model(bs, 0)
     assert len(models) == 1

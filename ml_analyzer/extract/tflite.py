@@ -6,17 +6,18 @@ from pebble import concurrent
 
 from .base import ExtractedModel, SourceType, IExtractor
 from ml_analyzer.context import Context
+from ml_analyzer.mlfw import MLFrameworkType
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class TensorFlowLiteExtractor(IExtractor):
+class TFLiteExtractor(IExtractor):
     # TODO: consider TFLite metadata: https://github.com/tensorflow/tensorflow/blob/b9559be1ad7f33e63b1907ff11932cc7c1fe46ea/tensorflow/lite/g3doc/convert/metadata.md#the-flatbuffers-file-identification, https://github.com/tensorflow/tflite-support/blob/4cd0551658b6e26030e0ba7fc4d3127152e0d4ae/tensorflow_lite_support/metadata/metadata_schema.fbs#L61
     # TODO: consider TFLite in .bin or .json format (versions previous to v3): https://github.com/tensorflow/tensorflow/blob/dec8e0b11f4f87693b67e125e67dfbc68d26c205/tensorflow/lite/schema/upgrade_schema.py#L117
 
-    def fw_type(self) -> str:
-        return 'TensorFlow Lite'
+    def fw_type(self) -> MLFrameworkType:
+        return MLFrameworkType.TF_LITE
 
     def extract_model(self, buf: bytes, is_exactly: bool) -> Set[bytes]:
         import tensorflow as tf

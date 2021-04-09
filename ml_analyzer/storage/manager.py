@@ -24,9 +24,9 @@ logger.setLevel(logging.INFO)
 DEAFULT_DATA_DIR = 'out'
 
 # setup peewee logger
-logger = logging.getLogger('peewee')
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.DEBUG)
+# logger = logging.getLogger('peewee')
+# logger.addHandler(logging.StreamHandler())
+# logger.setLevel(logging.DEBUG)
 
 
 class StorageManager:

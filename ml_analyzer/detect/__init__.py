@@ -6,7 +6,7 @@ import lief
 
 from ml_analyzer.context import Context
 from .base import DetectEvidence, EvidenceType
-from .tflite import TensorFlowLiteDetector
+from .tflite import TFLiteDetector
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -16,7 +16,7 @@ class MLDetector:
     def __init__(self, context: Context):
         self.context = context
         # init detectors
-        self.detectors: List[IDetector] = [TensorFlowLiteDetector()]
+        self.detectors: List[IDetector] = [TFLiteDetector()]
 
     def detect(self) -> Dict[str, List[DetectEvidence]]:
         result = defaultdict(list)

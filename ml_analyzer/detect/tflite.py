@@ -4,15 +4,16 @@ from androguard.core.bytecodes.dvm import DalvikVMFormat
 import lief
 
 from .base import IDetector
+from ml_analyzer.mlfw import MLFrameworkType
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
 # TODO: write a test for this detector
-class TensorFlowLiteDetector(IDetector):
-    def fw_type(self):
-        return "TensorFlow Lite"
+class TFLiteDetector(IDetector):
+    def fw_type(self) -> MLFrameworkType:
+        return MLFrameworkType.TF_LITE
 
     def detect_dot_so_file(self, elf: lief.ELF.Binary) -> bool:
         # detect by symbol

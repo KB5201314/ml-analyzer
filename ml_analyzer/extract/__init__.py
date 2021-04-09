@@ -11,7 +11,7 @@ import androguard.decompiler.dad.util as androguard_util
 from ml_analyzer.context import Context
 from ml_analyzer import util
 from .base import ExtractedModel, SourceType
-from .tflite import TensorFlowLiteExtractor
+from .tflite import TFLiteExtractor
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -21,7 +21,7 @@ class MLExtractor:
     def __init__(self, context: Context):
         self.context = context
         # init extractors
-        self.extractors: List[IExtractor] = [TensorFlowLiteExtractor()]
+        self.extractors: List[IExtractor] = [TFLiteExtractor()]
 
     def extract(self) -> Dict[str, List[ExtractedModel]]:
         result = defaultdict(list)
