@@ -10,7 +10,7 @@ import androguard.decompiler.dad.util as androguard_util
 
 from ml_analyzer.context import Context
 from ml_analyzer import util
-from .base import ExtractedModel, SourceType
+from .base import ExtractedModel, SourceType, IExtractor
 from .tflite import TFLiteExtractor
 
 logger = logging.getLogger(__name__)
@@ -38,8 +38,8 @@ class MLExtractor:
         # extract model by run apk on device
         self.context.device.adb_uninstall_pkg(self.context.package_name)
         if not self.context.device.adb_install_apk(self.context.apk_path):
-            logger.warning("failed to install apk. app_path: {} pkg: {}".format(
-                self.context.apk_path, self.context.package_name))
+            logger.warning("failed to install apk. app_path: %s pkg: %s",
+                           self.context.apk_path, self.context.package_name)
         else:
             # grant all permissions
             for p in self.context.permissions:
@@ -52,20 +52,20 @@ class MLExtractor:
                 # TODO: what about child process ?
                 session = frida_device.attach(pid)
             except Exception as e:
-                logger.error("The application does not start as expected. app_path: {} pkg: {} err: {}".format(
-                    self.context.apk_path, self.context.package_name, e))
+                logger.error("The application does not start as expected. app_path: %s pkg: %s err: %s",
+                             self.context.apk_path, self.context.package_name, e)
                 return result
 
             # setup extract in multiple way
-            self.setup_extract_by_scan_mem(session, result)
-            self.setup_extract_by_hook_deallocation(session, result)
-            self.setup_extract_by_hook_file_access(session, result)
+            # self.setup_extract_by_scan_mem(session, result)
+            # self.setup_extract_by_hook_deallocation(session, result)
+            # self.setup_extract_by_hook_file_access(session, result)
             self.setup_extract_by_hook_native_call(session, result)
 
             # for each detector call it's setup_hook_model_loading()
-            for extractor in self.extractors:
-                extractor.setup_hook_model_loading(
-                    self.context, session, result)
+            # for extractor in self.extractors:
+            #     extractor.setup_hook_model_loading(
+            #         self.context, session, result)
             frida_device.resume(pid)
             # sleep for a while
             time.sleep(20)

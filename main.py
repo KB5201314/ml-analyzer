@@ -35,34 +35,34 @@ def parse_args():
 def run():
     args = parse_args()
 
-    logger.info('Program running with args: {}', args)
+    logger.info('Program running with args: %s', args)
 
     if args.subcommand == 'detect':
         context = ContextBuilder().with_data_dir(
             args.data_dir).with_apk(args.apk).build()
         context.describe()
-        logger.info("Detecting ML framework for apk: {}", args.apk)
+        logger.info("Detecting ML framework for apk: %s", args.apk)
         detector = MLDetector(context)
         detect_results = detector.detect()
         logger.info("Detecting ML framework result:")
         for fw_type, evidences in detect_results.items():
-            logger.info('{}:', fw_type)
+            logger.info('%s:', fw_type)
             for evidence in evidences:
-                logger.info('{}:', evidence)
+                logger.info('%s:', evidence)
         context.storage.save_detect_framework_results(context, detect_results)
 
     elif args.subcommand == 'extract':
         context = ContextBuilder().with_data_dir(args.data_dir).with_apk(
             args.apk).with_device(args.adb_serial).build()
         context.describe()
-        logger.info("Extracting ML model for apk: {}", args.apk)
+        logger.info("Extracting ML model for apk: %s", args.apk)
         extractor = MLExtractor(context)
         extract_results = extractor.extract()
         logger.debug("Extracting ML model result:")
         for fw_type, models in extract_results.items():
-            logger.info('{}:', fw_type)
+            logger.info('%s:', fw_type)
             for model in models:
-                logger.info('{}:', model)
+                logger.info('%s:', model)
         context.storage.save_extract_model_results(context, extract_results)
 
     elif args.subcommand == 'run':

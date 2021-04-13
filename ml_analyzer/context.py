@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import List
 import logging
 import hashlib
 
@@ -69,7 +70,8 @@ class Context:
         return self
 
     def __set_data_dir(self, data_dir: str) -> Context:
-        self.storage: StorageManager = storage.manager.StorageManager(data_dir)
+        self.storage: storage.manager.StorageManager = storage.manager.StorageManager(
+            data_dir)
         return self
 
     @property
@@ -90,15 +92,13 @@ class Context:
         return self.androguard_apk.permissions if hasattr(self, 'androguard_apk') else None
 
     def describe(self):
-        logger.info("package: {}".format(self.package_name))
-        logger.info("SHA1: {}".format(self.sha1))
+        logger.info("package: %s", self.package_name)
+        logger.info("SHA1: %s", self.sha1)
 
 
 class ContextBuilder:
     def __init__(self):
         self.data_dir: str = storage.manager.DEAFULT_DATA_DIR
-        self.adb_serial: str = None
-        self.apk_path: str = None
 
     def with_apk(self, apk_path: str) -> ContextBuilder:
         self.apk_path = apk_path
@@ -115,6 +115,8 @@ class ContextBuilder:
     def build(self) -> Context:
         context = Context()
         context._Context__set_data_dir(self.data_dir)
-        context._Context__set_apk(self.apk_path)
-        context._Context__set_device(self.adb_serial)
+        if hasattr(self, 'apk_path'):
+            context._Context__set_apk(self.apk_path)
+        if hasattr(self, 'adb_serial'):
+            context._Context__set_device(self.adb_serial)
         return context

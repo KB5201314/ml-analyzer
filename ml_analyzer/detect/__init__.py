@@ -5,7 +5,7 @@ from collections import defaultdict
 import lief
 
 from ml_analyzer.context import Context
-from .base import DetectEvidence, EvidenceType
+from .base import DetectEvidence, EvidenceType, IDetector
 from .tflite import TFLiteDetector
 
 logger = logging.getLogger(__name__)

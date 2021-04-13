@@ -23,8 +23,8 @@ class TFLiteExtractor(IExtractor):
         import tensorflow as tf
 
         def try_with_interpreter(maybe_model: bytes) -> bool:
-            logger.debug("try_with_interpreter for a maybe_model. size: {}, content: {}...,".format(
-                len(maybe_model), maybe_model[:8]))
+            logger.debug("try_with_interpreter for a maybe_model. size: %s, content: %s...,",
+                         len(maybe_model), maybe_model[:8])
 
             @concurrent.process(timeout=10)
             def try_with_interpreter_internal(maybe_model: bytes) -> bool:
@@ -37,8 +37,8 @@ class TFLiteExtractor(IExtractor):
                 future.result()
                 return True
             except Exception as e:
-                logger.debug("this buffer may not be a tflite model. size: {}, content: {}..., error: {}".format(
-                    len(maybe_model), maybe_model[:8], e))
+                logger.debug("this buffer may not be a tflite model. size: %s, content: %s..., error: %s",
+                             len(maybe_model), maybe_model[:8], e)
                 return False
 
         models = set()

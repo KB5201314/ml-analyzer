@@ -12,6 +12,7 @@ class MLFrameworkType(Enum):
     OPENCV = auto()
     FEATHER_CNN = auto()
     PADDLE_PADDLE = auto()
+    Paddle_Lite = auto()
     XNN = auto()
     SUPERID = auto()
     PARROTS = auto()

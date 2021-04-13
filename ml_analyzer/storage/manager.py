@@ -48,25 +48,25 @@ class StorageManager:
 
     def save_androguard_result(self, sha1, androguard_apk, androguard_analysis):
         try:
-            sys.setrecursionlimit(50000)
+            sys.setrecursionlimit(200000)
             with lzma.open("{}/androguard/{}_androguard_apk.p".format(self.data_dir, sha1), "wb") as fp:
                 pickle.dump(androguard_apk, fp)
             with lzma.open("{}/androguard/{}_androguard_analysis.p".format(self.data_dir, sha1), "wb") as fp:
                 pickle.dump(androguard_analysis, fp)
         except Exception as e:
-            logger.error("Failed to save androguard analysis result.", e)
+            logger.error("Failed to save androguard analysis result. %s", e)
         # NOTICE: there is a bug in androguard, caused that we can't use `androguard_apk` after pickle.dump() it.
 
     def read_androguard_result(self, sha1) -> (APK, Analysis):
         try:
-            sys.setrecursionlimit(50000)
+            sys.setrecursionlimit(200000)
             with lzma.open("{}/androguard/{}_androguard_apk.p".format(self.data_dir, sha1), "rb") as fp:
                 androguard_apk = pickle.load(fp)
             with lzma.open("{}/androguard/{}_androguard_analysis.p".format(self.data_dir, sha1), "rb") as fp:
                 androguard_analysis = pickle.load(fp)
         except Exception as e:
             logger.warning(
-                "Failed to load androguard analysis result. because: {}".format(e))
+                "Failed to load androguard analysis result. because: %s", e)
             return None
         return (androguard_apk, androguard_analysis)
 
