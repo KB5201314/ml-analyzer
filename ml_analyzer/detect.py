@@ -15,7 +15,7 @@ logger.setLevel(logging.INFO)
 
 
 class EvidenceType(Enum):
-    MODEL_NAME = auto()
+    FILE_NAME = auto()
     MAGIC_WORDS = auto()
 
 
@@ -29,10 +29,13 @@ class MLDetector:
     def __init__(self, context: Context):
         self.context = context
         # init detectors
-        self.detectors: List[object] = [{'fw_type': MLFrameworkType.TF_LITE, 'model_name': r'.*\.tflite$', 'magic_words':
-                                         r'tensorflowlite|tensorflow lite|tflite|TfLiteTensor|kTfLiteUInt8|Java_org_tensorflow_lite_|Lorg/tensorflow/lite/'},
-                                        {'fw_type': MLFrameworkType.PADDLE_MOBILE, 'model_name': r'$^', 'magic_words':
-                                         r'paddle_|PaddlePaddle'}]
+        self.detectors: List[object] = [
+            {'fw_type': MLFrameworkType.TF_LITE, 'file_name': r'.*\.tflite$|^libtensorflowlite_jni\.so$', 'magic_words':
+             r'tensorflowlite|tensorflow lite|tflite|TfLiteTensor|kTfLiteUInt8|Java_org_tensorflow_lite_|Lorg/tensorflow/lite/'},
+            {'fw_type': MLFrameworkType.TENSORFLOW, 'file_name': r'$^', 'magic_words':
+             r'TensorFlowInference|tensorflow_inference|N10tensorflow'},
+            {'fw_type': MLFrameworkType.PADDLE_MOBILE, 'file_name': r'$^', 'magic_words':
+             r'paddle_|PaddlePaddle'}]
 
     # TODO: should we report detected symbols?
 
@@ -43,12 +46,12 @@ class MLDetector:
             file_name = file_path[file_path.rfind('/')+1:]
             file_content = self.context.androguard_apk.get_file(file_path)
             for detector in self.detectors:
-                # detect by model_name
-                if re.search(detector['model_name'], file_name) is not None:
+                # detect by file_name
+                if re.search(detector['file_name'], file_name, re.IGNORECASE) is not None:
                     result[detector['fw_type']].append(
-                        DetectEvidence(EvidenceType.MODEL_NAME, file_path))
+                        DetectEvidence(EvidenceType.FILE_NAME, file_path))
                 # detect by magic_words
-                if re.search(detector['magic_words'].encode(), file_content) is not None:
+                if re.search(detector['magic_words'].encode(), file_content, re.IGNORECASE) is not None:
                     result[detector['fw_type']].append(
-                        DetectEvidence(EvidenceType.MODEL_NAME, file_path))
+                        DetectEvidence(EvidenceType.FILE_NAME, file_path))
         return result

@@ -21,3 +21,6 @@ def test_detect():
     detect_results = detect_apk(
         'tests/apks/tflite_example_image_classification.apk')
     assert len(detect_results[MLFrameworkType.TF_LITE]) > 0
+    detect_results = detect_apk(
+        'tests/apks/com.cmever.android.ai.camera.apk')
+    assert len(detect_results[MLFrameworkType.TENSORFLOW]) > 0
