@@ -11,7 +11,6 @@ from androguard.core.analysis.analysis import Analysis
 
 from ml_analyzer import util
 from ml_analyzer.device import Device
-from ml_analyzer import storage
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -70,7 +69,8 @@ class Context:
         return self
 
     def __set_data_dir(self, data_dir: str) -> Context:
-        self.storage: storage.manager.StorageManager = storage.manager.StorageManager(
+        from ml_analyzer.storage.manager import StorageManager
+        self.storage: StorageManager = StorageManager(
             data_dir)
         return self
 
@@ -98,7 +98,8 @@ class Context:
 
 class ContextBuilder:
     def __init__(self):
-        self.data_dir: str = storage.manager.DEAFULT_DATA_DIR
+        from ml_analyzer.storage.manager import DEAFULT_DATA_DIR
+        self.data_dir: str = DEAFULT_DATA_DIR
 
     def with_apk(self, apk_path: str) -> ContextBuilder:
         self.apk_path = apk_path
