@@ -13,7 +13,7 @@ from androguard.core.analysis.analysis import Analysis
 
 from ml_analyzer.context import Context
 from ml_analyzer.detect import DetectEvidence, EvidenceType
-from ml_analyzer.extract.base import ExtractedModel, SourceType
+from ml_analyzer.extract import ExtractedModel, SourceType
 from ml_analyzer import util
 from .table import *
 
