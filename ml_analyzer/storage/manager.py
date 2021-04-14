@@ -99,5 +99,5 @@ class StorageManager:
                 Model.insert(
                     hash=sha1, framework=fw_type).on_conflict_replace().execute()
                 # FIXME: duplicate apk-model mapping caused by difference type
-                ApkModel.insert(apk_hash=context.sha1, model_hash=sha1,
-                                source_type=model.source_type, source=model.source).on_conflict_replace().execute()
+                ApkModel.get_or_create(apk_hash=context.sha1, model_hash=sha1,
+                                       source_type=model.source_type, source=model.source)

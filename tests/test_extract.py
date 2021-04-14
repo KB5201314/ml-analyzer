@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict
+from typing import Set, Dict
 
 from ml_analyzer.context import ContextBuilder
 from ml_analyzer.mlfw import MLFrameworkType
@@ -8,7 +8,7 @@ from ml_analyzer.extract import MLExtractor, ExtractedModel
 logger = logging.getLogger(__name__)
 
 
-def extract_apk(apk_path) -> Dict[str, List[ExtractedModel]]:
+def extract_apk(apk_path) -> Dict[str, Set[ExtractedModel]]:
     logger.info("Extracting ML framework for apk: %s", apk_path)
     context = ContextBuilder().with_apk(apk_path).build()
     extractor = MLExtractor(context)

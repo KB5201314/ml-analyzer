@@ -14,6 +14,8 @@ def parse_args():
         prog='ml-analyzer', description='A ML model analysis framework.')
     parser.add_argument('--adb-serial', action='store', required=False,
                         help='A serial number which can be used to identify a connected android device. can be found in `adb device -l`. This option can be omitted if there is only one android device connected.')
+    parser.add_argument('--no-adb-device', action='store_true', required=False,
+                        help='Do not connect to adb device')
     parser.add_argument('-d', '--data-dir', action='store', required=False, default=DEAFULT_DATA_DIR,
                         help='The name of the directory used to store the data. Default is `{}`.'.format(DEAFULT_DATA_DIR))
     subparsers = parser.add_subparsers(
@@ -52,8 +54,12 @@ def run():
         context.storage.save_detect_framework_results(context, detect_results)
 
     elif args.subcommand == 'extract':
-        context = ContextBuilder().with_data_dir(args.data_dir).with_apk(
-            args.apk).with_device(args.adb_serial).build()
+        builder = ContextBuilder().with_data_dir(args.data_dir).with_apk(
+            args.apk)
+        if not args.no_adb_device:
+            builder.with_device(args.adb_serial)
+        context = builder.build()
+
         context.describe()
         logger.info("Extracting ML model for apk: %s", args.apk)
         extractor = MLExtractor(context)

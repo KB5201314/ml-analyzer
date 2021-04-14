@@ -42,6 +42,12 @@ class ExtractedModel:
     def __str__(self):
         return self.__repr__()
 
+    def __hash__(self):
+        return hash(hash(self.source_type) + hash(self.content))
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.source_type == other.source_type and self.content == other.content and self.source == other.source
+
 
 class MLExtractor:
     def __init__(self, context: Context):
@@ -72,8 +78,8 @@ class MLExtractor:
             }
         ]
 
-    def extract(self) -> Dict[str, List[ExtractedModel]]:
-        result = defaultdict(list)
+    def extract(self) -> Dict[str, Set[ExtractedModel]]:
+        result = defaultdict(set)
         # extract statically
         # extract by scan files inside apk
         files = self.context.androguard_apk.get_files()
@@ -84,12 +90,12 @@ class MLExtractor:
             for extractor in self.extractors:
                 # check model_name in static file
                 if re.search(extractor['model_name'], file_name, re.IGNORECASE) is not None:
-                    result[extractor['fw_type']].append(
+                    result[extractor['fw_type']].add(
                         ExtractedModel(SourceType.STATIC_FILE,
                                        file_content, file_path)
                     )
                 # check magic_number in static file
-                result[extractor['fw_type']].extend(
+                result[extractor['fw_type']].update(
                     map(lambda model: ExtractedModel(SourceType.STATIC_FILE, model, file_path),
                         self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], file_content, True))
                 )
@@ -175,7 +181,8 @@ class MLExtractor:
                     cur_pos = buf.find(magic, cur_pos + 1)
                     if cur_pos == -1 or cur_pos < len(magic):
                         break
-                    # accroding to flatbuffers's file format, we have no (direct) way to get the file length, so we intercept the remainder directly
+                    # Accroding to flatbuffers's file format, we have no (direct) way to get the file length, so we intercept the remainder directly.
+                    # But there is a better solution: https://github.com/google/flatbuffers/issues/4258#issuecomment-642375567
                     maybe_model = buf[(cur_pos - offset):]
                     if model_checker_function(maybe_model):
                         models.add(maybe_model)
@@ -194,7 +201,7 @@ class MLExtractor:
                 model_string = "{}_{}".format(
                     model_string, msg['payload']['file']['path'])
             for extractor in self.extractors:
-                result[extractor['fw_type']].extend(
+                result[extractor['fw_type']].update(
                     map(lambda model: ExtractedModel(SourceType.MEM_SCAN, model, model_string),
                         self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'],  bs, False))
                 )
@@ -212,7 +219,7 @@ class MLExtractor:
             model_string = "mem_hook_deallocation_{}_{}".format(
                 msg['payload']['pointer'], msg['payload']['size'])
             for extractor in self.extractors:
-                result[extractor['fw_type']].extend(
+                result[extractor['fw_type']].update(
                     map(lambda model: ExtractedModel(SourceType.HOOK_DEALLOCATION, model, model_string),
                         self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], bs, True))
                 )
@@ -238,7 +245,7 @@ class MLExtractor:
             ret, file_content = self.context.device.adb_read_file(file_path)
             model_string = "mem_hook_file_access_{}".format(file_path)
             for extractor in self.extractors:
-                result[extractor['fw_type']].extend(
+                result[extractor['fw_type']].update(
                     map(lambda model: ExtractedModel(SourceType.HOOK_FILE_ACCESS, model, model_string),
                         self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], file_content, False))
                 )
@@ -268,7 +275,7 @@ class MLExtractor:
             # TODO: better way to check ret here
             model_string = "mem_hook_native_call"
             for extractor in self.extractors:
-                result[extractor['fw_type']].extend(
+                result[extractor['fw_type']].update(
                     map(lambda model: ExtractedModel(SourceType.HOOK_NATIVE_CALL, model, model_string),
                         self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], file_content, True))
                 )
@@ -286,7 +293,7 @@ class MLExtractor:
             if 'model_data' in msg.payload:
                 model_string = "mem_hook_model_loading_{}_{}".format(
                     msg['payload']['model_data'], msg['payload']['model_size'])
-                result[extractor['fw_type']].extend(
+                result[extractor['fw_type']].update(
                     map(lambda model: ExtractedModel(SourceType.HOOK_MODEL_LOAD, model, model_string),
                         self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], bs, True))
                 )
@@ -296,7 +303,7 @@ class MLExtractor:
                 # TODO: better way to check ret here
                 ret, file_content = self.context.device.adb_read_file(
                     model_path)
-                result[extractor['fw_type']].extend(
+                result[extractor['fw_type']].update(
                     map(lambda model: ExtractedModel(SourceType.HOOK_MODEL_LOAD, model, model_string),
                         self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], file_content, True))
                 )
