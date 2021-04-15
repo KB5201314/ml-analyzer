@@ -166,10 +166,9 @@ class MLExtractor:
         #                                                                                 +                      +                         +-> deny
         #                                                                                 +                      +-> model_checker is not None -> check by model_checker -> accept
         #                                                                                 +                                                   +-> deny
-        #                                                                                 +-> magic_numbers not empty -> search position by magic_numbers and check by model_checker -> accept
-        #                                                                                                            +                                                              +-> deny
-        #                                                                                                            +-> check by model_checker -> accept
-        #                                                                                                                                      +-> deny
+        #                                                                                 +-> check by model_checker -> accept
+        #                                                                                                           +-> search position by magic_numbers and check by model_checker -> accept
+        #                                                                                                                                                                           +-> deny
         models = set()
         # we cannot give any evaluation when magic_numbers is empty or model_checker_function is None, just treat it as a exactly file
         if is_exactly or len(magic_numbers) == 0 or (model_checker_function is None):
@@ -180,7 +179,10 @@ class MLExtractor:
                 if model_checker_function(buf):
                     models.add(buf)
         else:
-            # if the buf can not be determined exactly as a model, we need to search for magic bytes
+            # If the buf can not be determined exactly as a model, we need to search for magic bytes
+            # But giving a check by model_checker_function is needed, because some model may not have a magic_number but is valid
+            if model_checker_function(buf):
+                models.add(buf)
             # things about identifiers in flatbuffers: https://github.com/dvidelabs/flatcc#file-and-type-identifiers
             for magic, offset in magic_numbers:
                 cur_pos = -1
