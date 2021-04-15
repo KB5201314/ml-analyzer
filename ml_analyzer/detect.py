@@ -32,10 +32,13 @@ class MLDetector:
         self.detectors: List[object] = [
             {'fw_type': MLFrameworkType.TF_LITE, 'file_name': r'.*\.tflite$|^libtensorflowlite_jni\.so$', 'magic_words':
              r'tensorflowlite|tensorflow lite|tflite|TfLiteTensor|kTfLiteUInt8|Java_org_tensorflow_lite_|Lorg/tensorflow/lite/'},
-            {'fw_type': MLFrameworkType.TENSORFLOW, 'file_name': r'$^', 'magic_words':
+            {'fw_type': MLFrameworkType.TENSORFLOW, 'file_name': r'^libtensorflow_inference\.so$', 'magic_words':
              r'TensorFlowInference|tensorflow_inference|N10tensorflow'},
-            {'fw_type': MLFrameworkType.PADDLE_MOBILE, 'file_name': r'$^', 'magic_words':
-             r'paddle_|PaddlePaddle'}]
+            {'fw_type': MLFrameworkType.PADDLE_MOBILE, 'file_name': r'.*\.paddle$|^libpaddle_capi_.*\.so$', 'magic_words':
+             r'paddle_|PaddlePaddle'},
+            {'fw_type': MLFrameworkType.PADDLE_LITE, 'file_name': r'.*\.nb$|^libpaddle.*\.so$', 'magic_words':
+             r'N6paddle8lite_api|N6paddle4lite|paddle.?lite'}
+        ]
 
     # TODO: should we report detected symbols?
 

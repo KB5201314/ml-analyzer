@@ -11,6 +11,7 @@ import frida
 import androguard.decompiler.dad.util as androguard_util
 from pebble import concurrent
 import tensorflow as tf
+import paddlelite.lite as pdlite
 
 from ml_analyzer.context import Context
 from ml_analyzer import util
@@ -78,10 +79,25 @@ class MLExtractor:
             },
             {
                 'fw_type': MLFrameworkType.TENSORFLOW,
-                'model_name': r'.$^',
+                'model_name': r'$^',
                 'magic_numbers': [],
                 'model_load_functions': [],
                 'model_checker_function': model_checker_tensorflow
+            },
+            {
+                'fw_type': MLFrameworkType.PADDLE_MOBILE,
+                'model_name': r'.*\.paddle$',
+                'magic_numbers': [],
+                'model_load_functions': [],
+                # currently we cannot check it, because there is missing of some package in `paddlepaddle`: https://github.com/PaddlePaddle/Paddle/issues/15823. And paddle-mobile is deprecated
+                'model_checker_function': None
+            },
+            {
+                'fw_type': MLFrameworkType.PADDLE_LITE,
+                'model_name': r'.*\.nb$',
+                'magic_numbers': [],
+                'model_load_functions': [],
+                'model_checker_function': model_checker_paddle_lite
             }
         ]
 
@@ -357,5 +373,27 @@ def model_checker_tensorflow(maybe_model: bytes) -> bool:
                      len(maybe_model), maybe_model[:8], e)
 
     logger.debug("this buffer may not be a tensorflow model. size: %s, content: %s..., error: %s",
+                 len(maybe_model), maybe_model[:8], e)
+    return False
+
+
+def model_checker_paddle_lite(maybe_model: bytes) -> bool:
+    logger.debug("model_checker_paddle_lite for a maybe_model. size: %s, content: %s...,",
+                 len(maybe_model), maybe_model[:8])
+
+    @concurrent.process(timeout=10)
+    def model_checker_paddle_lite_internal(maybe_model: bytes) -> bool:
+        config = pdlite.MobileConfig()
+        config.set_model_from_buffer(maybe_model)
+        pdlite.create_paddle_predictor(config)
+    try:
+        future = model_checker_paddle_lite_internal(maybe_model)
+        future.result()
+        return True
+    except Exception as e:
+        logger.debug("failed to load with paddlelite.lite.create_paddle_predictor(), may not be a naivebuffer file. size: %s, content: %s..., error: %s",
+                     len(maybe_model), maybe_model[:8], e)
+
+    logger.debug("this buffer may not be a paddle-lite model. size: %s, content: %s..., error: %s",
                  len(maybe_model), maybe_model[:8], e)
     return False

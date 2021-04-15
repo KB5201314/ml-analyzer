@@ -14,7 +14,7 @@ install = "*"
 "delegator.py" = "*"
 frida = "*"
 peewee = "*"
-paddlepaddle = "*"
+paddlelite = "==2.8"
 
 [dev-packages]
 pylint = "*"
