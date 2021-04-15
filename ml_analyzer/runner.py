@@ -8,11 +8,16 @@ import time
 from ml_analyzer.context import Context
 from ml_analyzer import util
 from ml_analyzer.mlfw import MLFrameworkType
-from .base import IRunner
-from .tflite import TFLiteRunner
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+class Model:
+    @abstractmethod
+    def predict(self):
+        raise NotImplementedError
 
 
 class MLRunner:
@@ -20,8 +25,10 @@ class MLRunner:
         self.context = context
         # init extractors
         self.runner_constructors = {
-            MLFrameworkType.TF_LITE: TFLiteRunner
+            MLFrameworkType.TF_LITE: {
+                'loader': None
+            }
         }
 
-    def create_runner_of_fw(self, fw_type: MLFrameworkType) -> IRunner:
+    def create_runner_of_fw(self, fw_type: MLFrameworkType):
         return self.runner_constructors[fw_type](self.context)

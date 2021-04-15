@@ -2,8 +2,8 @@ from enum import Enum, auto
 
 
 class MLFrameworkType(Enum):
-    TENSORFLOW = auto()
-    TF_LITE = auto()
+    TENSORFLOW = auto() # also called as tensorflow-android
+    TF_LITE = auto()    # tensorflow-lite
     CAFFE = auto()
     CAFFE2 = auto()
     MXNET = auto()

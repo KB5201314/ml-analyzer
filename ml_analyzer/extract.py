@@ -74,7 +74,14 @@ class MLExtractor:
                         'indexs': [0]
                     },
                 ],
-                'model_checker_function': tflite_try_with_interpreter
+                'model_checker_function': model_checker_tflite
+            },
+            {
+                'fw_type': MLFrameworkType.TENSORFLOW,
+                'model_name': r'.$^',
+                'magic_numbers': [],
+                'model_load_functions': [],
+                'model_checker_function': model_checker_tensorflow
             }
         ]
 
@@ -155,17 +162,17 @@ class MLExtractor:
                 return None
 
     def extract_models_by_magic_number(self, magic_numbers: List[Tuple[bytes, int]], model_checker_function: Callable[[bytes], bool],  buf: bytes, is_exactly: bool) -> Set[bytes]:
-        # buf -> is_exactly or model_checker_function is None -> magic_numbers not empty -> check by magic_numbers -> accept
-        #                                                    +                      +                         +-> deny
-        #                                                    +                      +-> model_checker is not None -> check by model_checker -> accept
-        #                                                    +                                                   +-> deny
-        #                                                    +-> magic_numbers not empty -> search position by magic_numbers and check by model_checker -> accept
-        #                                                                               +                                                              +-> deny
-        #                                                                               +-> check by model_checker -> accept
-        #                                                                                                         +-> deny
+        # buf -> is_exactly or or magic_numbers is empty or smodel_checker_function is None -> magic_numbers not empty -> check by magic_numbers -> accept
+        #                                                                                 +                      +                         +-> deny
+        #                                                                                 +                      +-> model_checker is not None -> check by model_checker -> accept
+        #                                                                                 +                                                   +-> deny
+        #                                                                                 +-> magic_numbers not empty -> search position by magic_numbers and check by model_checker -> accept
+        #                                                                                                            +                                                              +-> deny
+        #                                                                                                            +-> check by model_checker -> accept
+        #                                                                                                                                      +-> deny
         models = set()
-        # we cannot give any evaluation when model_checker_function is None, just treat it as a exactly file
-        if is_exactly or (model_checker_function is None):
+        # we cannot give any evaluation when magic_numbers is empty or model_checker_function is None, just treat it as a exactly file
+        if is_exactly or len(magic_numbers) == 0 or (model_checker_function is None):
             if len(magic_numbers) > 0:
                 if any(map(lambda mn: buf[mn[1]: mn[1] + len(mn[0])] == mn[0], magic_numbers)):
                     models.add(buf)
@@ -314,21 +321,39 @@ class MLExtractor:
         script.exports.run(extractor['model_load_functions'])
 
 
-def tflite_try_with_interpreter(maybe_model: bytes) -> bool:
-    logger.debug("tflite_try_with_interpreter for a maybe_model. size: %s, content: %s...,",
+def model_checker_tflite(maybe_model: bytes) -> bool:
+    logger.debug("model_checker_tflite for a maybe_model. size: %s, content: %s...,",
                  len(maybe_model), maybe_model[:8])
 
     @concurrent.process(timeout=10)
-    def tflite_try_with_interpreter_internal(maybe_model: bytes) -> bool:
+    def model_checker_tflite_internal(maybe_model: bytes) -> bool:
         # setup interpreter
         interpreter = tf.lite.Interpreter(
             model_content=maybe_model)
         interpreter.allocate_tensors()
     try:
-        future = tflite_try_with_interpreter_internal(maybe_model)
+        future = model_checker_tflite_internal(maybe_model)
         future.result()
         return True
     except Exception as e:
         logger.debug("this buffer may not be a tflite model. size: %s, content: %s..., error: %s",
                      len(maybe_model), maybe_model[:8], e)
         return False
+
+
+def model_checker_tensorflow(maybe_model: bytes) -> bool:
+    logger.debug("model_checker_tensorflow for a maybe_model. size: %s, content: %s...,",
+                 len(maybe_model), maybe_model[:8])
+    # https://www.tensorflow.org/tutorials/keras/save_and_load?hl=zh-cn#savedmodel_%E6%A0%BC%E5%BC%8F
+    # try load GraphDef(*.pb)
+    try:
+        graph_def = tf.compat.v1.GraphDef()
+        graph_def.ParseFromString(maybe_model)
+        return True
+    except Exception as e:
+        logger.debug("failed to load with tf.compat.v1.GraphDef(), may not be a graph def file. size: %s, content: %s..., error: %s",
+                     len(maybe_model), maybe_model[:8], e)
+
+    logger.debug("this buffer may not be a tensorflow model. size: %s, content: %s..., error: %s",
+                 len(maybe_model), maybe_model[:8], e)
+    return False
