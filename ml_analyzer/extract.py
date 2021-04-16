@@ -6,6 +6,7 @@ from abc import abstractmethod
 import time
 from enum import Enum, auto
 import re
+import warnings
 
 import frida
 import androguard.decompiler.dad.util as androguard_util
@@ -107,7 +108,7 @@ class MLExtractor:
         # extract by scan files inside apk
         files = self.context.androguard_apk.get_files()
         # we will also check files outside the `assets/` directory
-        for file_path in files:
+        for file_path in filter(lambda p: p.startswith("assets/"), files):
             file_name = file_path[file_path.rfind('/')+1:]
             file_content = self.context.androguard_apk.get_file(file_path)
             for extractor in self.extractors:
@@ -340,7 +341,7 @@ class MLExtractor:
 
 
 def model_checker_tflite(maybe_model: bytes) -> bool:
-    logger.debug("model_checker_tflite for a maybe_model. size: %s, content: %s...,",
+    logger.debug("model_checker_tflite for a maybe_model. size: %s, content: %s...",
                  len(maybe_model), maybe_model[:8])
 
     @concurrent.process(timeout=10)
@@ -360,29 +361,37 @@ def model_checker_tflite(maybe_model: bytes) -> bool:
 
 
 def model_checker_tensorflow(maybe_model: bytes) -> bool:
-    logger.debug("model_checker_tensorflow for a maybe_model. size: %s, content: %s...,",
+    logger.debug("model_checker_tensorflow for a maybe_model. size: %s, content: %s...",
                  len(maybe_model), maybe_model[:8])
     # https://www.tensorflow.org/tutorials/keras/save_and_load?hl=zh-cn#savedmodel_%E6%A0%BC%E5%BC%8F
     # try load GraphDef(*.pb)
     try:
         graph_def = tf.compat.v1.GraphDef()
-        graph_def.ParseFromString(maybe_model)
+        with warnings.catch_warnings(record=True) as ws:
+            graph_def.ParseFromString(maybe_model)
+            runtime_warning = next(
+                (w for w in ws if issubclass(w.category, RuntimeWarning)), None)
+            if runtime_warning is not None:
+                # If this there are some mistake in model file, a 'RuntimeWarning: Unexpected end-group tag: Not all data was converted' will be triggered
+                logger.debug("failed to load with tf.compat.v1.GraphDef(), may not be a graph def file. size: %s, content: %s..., error: %s",
+                             len(maybe_model), maybe_model[:8], runtime_warning)
+                return False
         return True
     except Exception as e:
         logger.debug("failed to load with tf.compat.v1.GraphDef(), may not be a graph def file. size: %s, content: %s..., error: %s",
                      len(maybe_model), maybe_model[:8], e)
 
-    logger.debug("this buffer may not be a tensorflow model. size: %s, content: %s..., error: %s",
-                 len(maybe_model), maybe_model[:8], e)
+    logger.debug("this buffer may not be a tensorflow model. size: %s, content: %s...",
+                 len(maybe_model), maybe_model[:8])
     return False
 
 
 def model_checker_paddle_lite(maybe_model: bytes) -> bool:
-    logger.debug("model_checker_paddle_lite for a maybe_model. size: %s, content: %s...,",
+    logger.debug("model_checker_paddle_lite for a maybe_model. size: %s, content: %s...",
                  len(maybe_model), maybe_model[:8])
 
     @concurrent.process(timeout=10)
-    def model_checker_paddle_lite_internal(maybe_model: bytes) -> bool:
+    def model_checker_paddle_lite_internal(maybe_model: bytes):
         config = pdlite.MobileConfig()
         config.set_model_from_buffer(maybe_model)
         pdlite.create_paddle_predictor(config)
@@ -393,7 +402,6 @@ def model_checker_paddle_lite(maybe_model: bytes) -> bool:
     except Exception as e:
         logger.debug("failed to load with paddlelite.lite.create_paddle_predictor(), may not be a naivebuffer file. size: %s, content: %s..., error: %s",
                      len(maybe_model), maybe_model[:8], e)
-
-    logger.debug("this buffer may not be a paddle-lite model. size: %s, content: %s..., error: %s",
-                 len(maybe_model), maybe_model[:8], e)
+    logger.debug("this buffer may not be a paddle-lite model. size: %s, content: %s...",
+                 len(maybe_model), maybe_model[:8])
     return False

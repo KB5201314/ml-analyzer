@@ -24,3 +24,9 @@ def test_detect():
     detect_results = detect_apk(
         'tests/apks/com.cmever.android.ai.camera.apk')
     assert len(detect_results[MLFrameworkType.TENSORFLOW]) > 0
+    detect_results = detect_apk(
+        'tests/apks/paddlepaddle-moile-paddlepaddle_demo_debug.apk')
+    assert len(detect_results[MLFrameworkType.PADDLE_MOBILE]) > 0
+    detect_results = detect_apk(
+        'tests/apks/paddle-lite-mobilenet_classification_demo.apk')
+    assert len(detect_results[MLFrameworkType.PADDLE_LITE]) > 0
