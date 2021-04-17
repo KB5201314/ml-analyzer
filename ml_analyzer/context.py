@@ -39,25 +39,31 @@ class Context:
         with open(apk_path, 'rb') as f:
             self._apk_bytes = f.read()
         self.apk_sha1 = util.sha1_of_bytes(self._apk_bytes)
-        # TODO: test this
-        # try to load androguard cache
+        logger.info("Try to load androguard cache")
         r = self.storage.read_androguard_result(self.apk_sha1)
-        if r is None:
+        if r is not None:
+            logger.info(
+                'Load androguard cache successfully')
+        else:
             logger.info(
                 'androguard cache not exist, so we perform analysis now')
             # analyze using androguard
-            a, d, dx = misc.AnalyzeAPK(self._apk_bytes, raw=True)
+            a = APK(self._apk_bytes, raw=True)
+            d = []
+            for dex in a.get_all_dex():
+                df = DalvikVMFormat(dex, using_api=a.get_target_sdk_version())
+                d.append(df)
             self.androguard_apk: APK = a
             self.androguard_dexs: List[DalvikVMFormat] = d
-            self.androguard_analysis: Analysis = dx
             # save it so that we need not to analyze it again
+            logger.info(
+                'Saving androguard cache')
             self.storage.save_androguard_result(
-                self.apk_sha1, self.androguard_apk, self.androguard_analysis)
+                self.apk_sha1, self.androguard_apk, self.androguard_dexs)
             # reload from cache
             r = self.storage.read_androguard_result(self.apk_sha1)
         self.androguard_apk = r[0]
-        self.androguard_analysis = r[1]
-        self.androguard_dexs = self.androguard_analysis.vms
+        self.androguard_dexs = r[1]
         logger.info("Save generated apk info")
         self.storage.save_apk(self)
         logger.info("Generate info for apk finished")
@@ -115,6 +121,7 @@ class ContextBuilder:
 
     def build(self) -> Context:
         context = Context()
+        # TODO: allow none storage
         context._Context__set_data_dir(self.data_dir)
         if hasattr(self, 'apk_path'):
             context._Context__set_apk(self.apk_path)
