@@ -457,7 +457,7 @@ def model_checker_caffe2(maybe_model: bytes) -> bool:
     logger.debug("model_checker_caffe for a maybe_model. size: %s, content: %s...",
                  len(maybe_model), maybe_model[:8])
     try:
-        import caffe2.python.caffe2_pb2 as cp2
+        import caffe2.proto.caffe2_pb2 as cp2
 
         def internal_func():
             nd = cp2.NetDef()
