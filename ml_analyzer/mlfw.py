@@ -8,6 +8,7 @@ class MLFrameworkType(Enum):
     PADDLE_LITE = auto()
     CAFFE = auto()
     CAFFE2 = auto()
+    SENSETIME = auto()
     PYTORCH = auto()
     MXNET = auto()
     DEEP_LEARNING = auto()

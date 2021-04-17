@@ -112,6 +112,13 @@ class MLExtractor:
                 'magic_numbers': [],
                 'model_load_functions': [],
                 'model_checker_function': model_checker_caffe2
+            },
+            {
+                'fw_type': MLFrameworkType.SENSETIME,
+                'model_name': r'$^',
+                'magic_numbers': [(b'STEF', 0)],
+                'model_load_functions': [],
+                'model_checker_function': None
             }
         ]
 

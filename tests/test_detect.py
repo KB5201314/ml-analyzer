@@ -33,3 +33,6 @@ def test_detect():
     detect_results = detect_apk(
         'tests/apks/caffe-com.wizzair.WizzAirApp.apk')
     assert len(detect_results[MLFrameworkType.CAFFE]) > 0
+    detect_results = detect_apk(
+        'tests/apks/sensetime_com.camera.galaxyx.apk')
+    assert len(detect_results[MLFrameworkType.SENSETIME]) > 0
