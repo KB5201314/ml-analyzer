@@ -32,4 +32,4 @@ jobs:
       - name: Install dependecies
         run: pipenv install -d # Install all dependencies, including development ones
       - name: Run test
-        run: pipenv run pytest --log-cli-level DEBUG
+        run: pipenv run pytest
