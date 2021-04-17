@@ -30,3 +30,6 @@ def test_detect():
     detect_results = detect_apk(
         'tests/apks/paddle-lite-mobilenet_classification_demo.apk')
     assert len(detect_results[MLFrameworkType.PADDLE_LITE]) > 0
+    detect_results = detect_apk(
+        'tests/apks/caffe-com.wizzair.WizzAirApp.apk')
+    assert len(detect_results[MLFrameworkType.CAFFE]) > 0

@@ -30,3 +30,6 @@ def test_tflite_extract_model():
     extract_results = extract_apk(
         'tests/apks/paddle-lite-mobilenet_classification_demo.apk')
     assert len(extract_results[MLFrameworkType.PADDLE_LITE]) > 0
+    extract_results = extract_apk(
+        'tests/apks/caffe-com.wizzair.WizzAirApp.apk')
+    assert len(extract_results[MLFrameworkType.CAFFE]) > 0

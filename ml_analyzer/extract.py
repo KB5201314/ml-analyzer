@@ -2,7 +2,6 @@ import logging
 from typing import List, Dict, Set, Any, Tuple, Callable
 from dataclasses import dataclass
 from collections import defaultdict
-from abc import abstractmethod
 import time
 from enum import Enum, auto
 import re
@@ -99,6 +98,20 @@ class MLExtractor:
                 'magic_numbers': [],
                 'model_load_functions': [],
                 'model_checker_function': model_checker_paddle_lite
+            },
+            {
+                'fw_type': MLFrameworkType.CAFFE,
+                'model_name': r'.*\.caffemodel$|.*\.prototxt$|.*\.protobin$',
+                'magic_numbers': [],
+                'model_load_functions': [],
+                'model_checker_function': model_checker_caffe
+            },
+            {
+                'fw_type': MLFrameworkType.CAFFE2,
+                'model_name': r'$^',
+                'magic_numbers': [],
+                'model_load_functions': [],
+                'model_checker_function': model_checker_caffe2
             }
         ]
 
@@ -340,6 +353,16 @@ class MLExtractor:
         script.exports.run(extractor['model_load_functions'])
 
 
+def capture_and_reise_runtine_warning(func):
+    with warnings.catch_warnings(record=True) as ws:
+        func()
+        runtime_warning = next(
+            (w for w in ws if issubclass(w.category, RuntimeWarning)), None)
+        if runtime_warning is not None:
+            raise RuntimeError(
+                'RuntimeWarning raised: {}'.format(runtime_warning))
+
+
 def model_checker_tflite(maybe_model: bytes) -> bool:
     logger.debug("model_checker_tflite for a maybe_model. size: %s, content: %s...",
                  len(maybe_model), maybe_model[:8])
@@ -366,16 +389,11 @@ def model_checker_tensorflow(maybe_model: bytes) -> bool:
     # https://www.tensorflow.org/tutorials/keras/save_and_load?hl=zh-cn#savedmodel_%E6%A0%BC%E5%BC%8F
     # try load GraphDef(*.pb)
     try:
-        graph_def = tf.compat.v1.GraphDef()
-        with warnings.catch_warnings(record=True) as ws:
+        def internal_func():
+            graph_def = tf.compat.v1.GraphDef()
             graph_def.ParseFromString(maybe_model)
-            runtime_warning = next(
-                (w for w in ws if issubclass(w.category, RuntimeWarning)), None)
-            if runtime_warning is not None:
-                # If this there are some mistake in model file, a 'RuntimeWarning: Unexpected end-group tag: Not all data was converted' will be triggered
-                logger.debug("failed to load with tf.compat.v1.GraphDef(), may not be a graph def file. size: %s, content: %s..., error: %s",
-                             len(maybe_model), maybe_model[:8], runtime_warning)
-                return False
+
+        capture_and_reise_runtine_warning(internal_func)
         return True
     except Exception as e:
         logger.debug("failed to load with tf.compat.v1.GraphDef(), may not be a graph def file. size: %s, content: %s..., error: %s",
@@ -403,5 +421,47 @@ def model_checker_paddle_lite(maybe_model: bytes) -> bool:
         logger.debug("failed to load with paddlelite.lite.create_paddle_predictor(), may not be a naivebuffer file. size: %s, content: %s..., error: %s",
                      len(maybe_model), maybe_model[:8], e)
     logger.debug("this buffer may not be a paddle-lite model. size: %s, content: %s...",
+                 len(maybe_model), maybe_model[:8])
+    return False
+
+
+def model_checker_caffe(maybe_model: bytes) -> bool:
+    logger.debug("model_checker_caffe for a maybe_model. size: %s, content: %s...",
+                 len(maybe_model), maybe_model[:8])
+    try:
+        import ml_analyzer.misc.caffe_pb2 as cp
+
+        def internal_func():
+            np = cp.NetParameter()
+            np.ParseFromString(maybe_model)
+
+        capture_and_reise_runtine_warning(internal_func)
+        return True
+    except Exception as e:
+        logger.debug("failed to load with caffe_pb2.NetParameter(), may not be a graph def file. size: %s, content: %s..., error: %s",
+                     len(maybe_model), maybe_model[:8], e)
+
+    logger.debug("this buffer may not be a caffe model. size: %s, content: %s...",
+                 len(maybe_model), maybe_model[:8])
+    return False
+
+
+def model_checker_caffe2(maybe_model: bytes) -> bool:
+    logger.debug("model_checker_caffe for a maybe_model. size: %s, content: %s...",
+                 len(maybe_model), maybe_model[:8])
+    try:
+        import caffe2.python.caffe2_pb2 as cp2
+
+        def internal_func():
+            nd = cp2.NetDef()
+            nd.ParseFromString(maybe_model)
+
+        capture_and_reise_runtine_warning(internal_func)
+        return True
+    except Exception as e:
+        logger.debug("failed to load with caffe_pb2.NetParameter(), may not be a graph def file. size: %s, content: %s..., error: %s",
+                     len(maybe_model), maybe_model[:8], e)
+
+    logger.debug("this buffer may not be a caffe model. size: %s, content: %s...",
                  len(maybe_model), maybe_model[:8])
     return False
