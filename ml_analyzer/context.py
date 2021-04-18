@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List
 import logging
 import hashlib
+import mmap
 
 from androguard import misc
 from androguard.core.bytecodes.apk import APK
@@ -36,8 +37,9 @@ class Context:
         logger.info("Generating info for apk: {}".format(apk_path))
         self.apk_path: str = apk_path
         # calculate md5 of apk file
+        MAP_POPULATE = 0x08000
         with open(apk_path, 'rb') as f:
-            self._apk_bytes = f.read()
+            self._apk_bytes = mmap.mmap(f.fileno(), 0, flags=mmap.MAP_PRIVATE | MAP_POPULATE, prot=mmap.PROT_READ)
         self.apk_sha1 = util.sha1_of_bytes(self._apk_bytes)
         logger.info("Try to load androguard cache")
         r = self.storage.read_androguard_result(self.apk_sha1)
