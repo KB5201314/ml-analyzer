@@ -43,7 +43,9 @@ class MLDetector:
             {'fw_type': MLFrameworkType.CAFFE2,
                 'file_name': r'$^', 'magic_words': r'[^5]caffe2|N6caffe2'},
             {'fw_type': MLFrameworkType.SENSETIME,
-                'file_name': r'^libst_mobile\.so$', 'magic_words': r'stmobilesdk|sensetime'}
+                'file_name': r'^libst_mobile\.so$', 'magic_words': r'stmobilesdk|sensetime'},
+            {'fw_type': MLFrameworkType.NCNN,
+                'file_name': r'^libncnn\.so$', 'magic_words': r'ncnn_'}
         ]
 
     # TODO: should we report detected symbols?

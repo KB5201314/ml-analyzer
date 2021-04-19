@@ -39,3 +39,6 @@ def test_detect():
     detect_results = detect_apk(
         'tests/apks/sensetime_com.camera.galaxyx.apk')
     assert len(detect_results[MLFrameworkType.SENSETIME]) > 0
+    detect_results = detect_apk(
+        'tests/apks/ncnn-com.tencent.styletransferncnn-debug.apk')
+    assert len(detect_results[MLFrameworkType.NCNN]) > 0

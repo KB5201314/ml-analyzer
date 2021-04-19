@@ -16,6 +16,7 @@ frida = "*"
 peewee = "*"
 paddlelite = "==2.8"
 torch = "*"
+ncnn = {path = "./res/ncnn.tar.gz"}
 
 [dev-packages]
 pylint = "*"

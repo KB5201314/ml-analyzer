@@ -36,6 +36,3 @@ def test_tflite_extract_model():
     extract_results = extract_apk(
         'tests/apks/caffe2-com.facebook.arstudio.player.apk')
     assert len(extract_results[MLFrameworkType.CAFFE2]) > 0
-    extract_results = extract_apk(
-        'tests/apks/sensetime_com.camera.galaxyx.apk')
-    assert len(extract_results[MLFrameworkType.SENSETIME]) > 0
