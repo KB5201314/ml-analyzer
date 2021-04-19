@@ -28,8 +28,19 @@ def parse_args():
         name='extract', description='Detect ML framework which this application use.')
     parser_extract.add_argument(
         '--apk', action='store', required=True, help='Path of apk file')
-    parser_run = subparsers.add_parser(
-        name='run', description='Detect ML framework which this application use.')
+    parser_analysis_model = subparsers.add_parser(
+        name='analysis-model', description='Analysis dumped model file.')
+    parser_analysis_model.add_argument(
+        '--model-hash', action='store', required=True, help='Hash value of model file')
+    parser_analysis_apk = subparsers.add_parser(
+        name='analysis-apk', description='Analysis apk file.')
+    parser_analysis_apk.add_argument(
+        '--apk-hash', action='store', required=True, help='Hash value of apk file')
+    parser_attack = subparsers.add_parser(
+        name='attack', description='Attack a model')
+    parser_attack.add_argument(
+        '--model-hash', action='store', required=True, help='Hash value of model file')
+
     args = parser.parse_args()
     return args
 
@@ -71,8 +82,12 @@ def run():
                 logger.info('%s:', model)
         context.storage.save_extract_model_results(context, extract_results)
 
-    elif args.subcommand == 'run':
-        context = ContextBuilder().with_data_dir(args.data_dir).build()
+    elif args.subcommand == 'analysis-model':
+        pass
+    elif args.subcommand == 'analysis-apk':
+        pass
+    elif args.subcommand == 'attack':
+        pass
 
 
 if __name__ == "__main__":
