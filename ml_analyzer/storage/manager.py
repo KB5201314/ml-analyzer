@@ -48,7 +48,7 @@ class StorageManager:
 
     def save_androguard_result(self, sha1, androguard_apk, androguard_dexs):
         try:
-            sys.setrecursionlimit(200000)
+            sys.setrecursionlimit(2000000)
             with lzma.open("{}/androguard/{}_androguard_apk.p".format(self.data_dir, sha1), "wb") as fp:
                 pickle.dump(androguard_apk, fp)
             with lzma.open("{}/androguard/{}_androguard_dexs.p".format(self.data_dir, sha1), "wb") as fp:
@@ -59,7 +59,7 @@ class StorageManager:
 
     def read_androguard_result(self, sha1) -> (APK, Analysis):
         try:
-            sys.setrecursionlimit(200000)
+            sys.setrecursionlimit(2000000)
             with lzma.open("{}/androguard/{}_androguard_apk.p".format(self.data_dir, sha1), "rb") as fp:
                 androguard_apk = pickle.load(fp)
             with lzma.open("{}/androguard/{}_androguard_dexs.p".format(self.data_dir, sha1), "rb") as fp:
