@@ -133,16 +133,17 @@ class MLExtractor:
             file_content = self.context.androguard_apk.get_file(file_path)
             for extractor in self.extractors:
                 # check model_name in static file
-                if re.search(extractor['model_name'], file_name, re.IGNORECASE) is not None:
+                if len(file_name) > 0 and re.search(extractor['model_name'], file_name, re.IGNORECASE) is not None:
                     result[extractor['fw_type']].add(
                         ExtractedModel(SourceType.STATIC_FILE,
                                        file_content, file_path)
                     )
-                # check magic_number in static file
-                result[extractor['fw_type']].update(
-                    map(lambda model: ExtractedModel(SourceType.STATIC_FILE, model, file_path),
-                        self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], file_content, True))
-                )
+                if len(file_content) > 0:
+                    # check magic_number in static file
+                    result[extractor['fw_type']].update(
+                        map(lambda model: ExtractedModel(SourceType.STATIC_FILE, model, file_path),
+                            self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], file_content, True))
+                    )
 
         # extract dynamically
         # extract model by run apk on device

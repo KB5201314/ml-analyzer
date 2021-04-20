@@ -58,11 +58,11 @@ class MLDetector:
             file_content = self.context.androguard_apk.get_file(file_path)
             for detector in self.detectors:
                 # detect by file_name
-                if re.search(detector['file_name'], file_name, re.IGNORECASE) is not None:
+                if len(file_name) > 0 and re.search(detector['file_name'], file_name, re.IGNORECASE) is not None:
                     result[detector['fw_type']].append(
                         DetectEvidence(EvidenceType.FILE_NAME, file_path))
                 # detect by magic_words
-                if re.search(detector['magic_words'].encode(), file_content, re.IGNORECASE) is not None:
+                if len(file_content) > 0 and re.search(detector['magic_words'].encode(), file_content, re.IGNORECASE) is not None:
                     result[detector['fw_type']].append(
-                        DetectEvidence(EvidenceType.FILE_NAME, file_path))
+                        DetectEvidence(EvidenceType.MAGIC_WORDS, file_path))
         return result
