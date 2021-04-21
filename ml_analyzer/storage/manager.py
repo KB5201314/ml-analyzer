@@ -78,7 +78,7 @@ class StorageManager:
                 f.write(context.apk_bytes)
         # save to db
         Apk.insert(hash=context.sha1,
-                   package=context.package_name).on_conflict_replace().execute()
+                   package=context.package_name, file_path=context.apk_path).on_conflict_replace().execute()
 
     def save_detect_framework_results(self, context: Context, detect_results: Dict[str, List[DetectEvidence]]):
         for fw_type, evidences in detect_results.items():

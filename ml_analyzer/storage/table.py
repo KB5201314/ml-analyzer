@@ -11,7 +11,7 @@ class BaseModel(peewee.Model):
 class Apk(BaseModel):
     hash = peewee.TextField(null=False, primary_key=True)
     package = peewee.TextField(null=False)
-    # file_path = peewee.TextField(null=False)
+    file_path = peewee.TextField(null=False)
 
 
 class ApkFramework(BaseModel):
