@@ -85,6 +85,10 @@ class Device:
             "shell pm grant {} {}".format(pkg_name, permission))
         return ret
 
+    def adb_device_weakup(self) -> int:
+        ret, _ = self.adb_run("shell input keyevent KEYCODE_WAKEUP")
+        return ret
+
     def __repr__(self):
         return '<Device adb_serial={}>'.format(self.adb_serial)
 

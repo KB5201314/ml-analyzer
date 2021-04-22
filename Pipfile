@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 androguard = "*"
-lief = "*"
 netron = "*"
 tensorflow = "2.4.1"
 pytest = "*"
@@ -17,6 +16,7 @@ peewee = "*"
 paddlelite = "==2.8"
 torch = "*"
 ncnn = {path = "./res/ncnn.tar.gz"}
+angr = "*"
 
 [dev-packages]
 pylint = "*"

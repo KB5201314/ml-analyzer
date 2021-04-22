@@ -6,6 +6,7 @@ import time
 from enum import Enum, auto
 import re
 import warnings
+import sys
 
 import frida
 import androguard.decompiler.dad.util as androguard_util
@@ -18,7 +19,7 @@ from ml_analyzer import util
 from ml_analyzer.mlfw import MLFrameworkType
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class SourceType(Enum):
@@ -178,6 +179,7 @@ class MLExtractor:
             logger.error("failed to install apk. app_path: %s pkg: %s: no `device` in this context, maybe is not initialized.",
                          self.context.apk_path, self.context.package_name)
             return None
+        self.context.device.adb_device_weakup()  # device weak up
         self.context.device.adb_uninstall_pkg(self.context.package_name)
         if not self.context.device.adb_install_apk(self.context.apk_path):
             logger.error("failed to install apk. app_path: %s pkg: %s",
@@ -190,6 +192,7 @@ class MLExtractor:
                     self.context.package_name, p)
             # spawn application program
             frida_device: frida.core.Device = self.context.device.frida_device
+            self.context.device.adb_device_weakup()
             try:
                 pid = frida_device.spawn(self.context.package_name)
                 # TODO: what about child process ?
