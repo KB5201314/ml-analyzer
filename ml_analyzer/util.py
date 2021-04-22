@@ -1,6 +1,7 @@
 import logging
 import hashlib
 import os
+import sys
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -56,3 +57,9 @@ def parse_descriptor_for_frida(atype: str, parse_primary_type: str = True) -> st
         res = atype
         logger.debug('Unknown descriptor: "%s".', atype)
     return res
+
+
+def mute_stdout_and_stderr():
+    f = open('/dev/null', 'wb')
+    os.dup2(f.fileno(), sys.stdout.fileno())
+    os.dup2(f.fileno(), sys.stderr.fileno())

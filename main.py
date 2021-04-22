@@ -28,6 +28,10 @@ def parse_args():
         name='extract', description='Detect ML framework which this application use.')
     parser_extract.add_argument(
         '--apk', action='store', required=True, help='Path of apk file')
+    parser_extract.add_argument(
+        '--no-static', action='store_true', required=False, help='Do not try extract statically')
+    parser_extract.add_argument(
+        '--no-dynamic', action='store_true', required=False, help='Do not try extract dynamically')
     parser_analysis_model = subparsers.add_parser(
         name='analysis-model', description='Analysis dumped model file.')
     parser_analysis_model.add_argument(
@@ -73,7 +77,7 @@ def run():
 
         context.describe()
         logger.info("Extracting ML model for apk: %s", args.apk)
-        extractor = MLExtractor(context)
+        extractor = MLExtractor(context, args)
         extract_results = extractor.extract()
         logger.debug("Extracting ML model result:")
         for fw_type, models in extract_results.items():

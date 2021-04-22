@@ -52,8 +52,9 @@ class ExtractedModel:
 
 
 class MLExtractor:
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, args):
         self.context = context
+        self.args = args
         # init extractors
         self.extractors: List[Dict[str, Any]] = [
             {
@@ -125,52 +126,66 @@ class MLExtractor:
 
     def extract(self) -> Dict[str, Set[ExtractedModel]]:
         result = defaultdict(set)
-        # extract statically
-        # extract by scan files inside apk
-        files = self.context.androguard_apk.get_files()
-        # we will also check files outside the `assets/` directory
-        for file_path in filter(lambda p: p.startswith("assets/"), files):
-            file_name = file_path[file_path.rfind('/')+1:]
-            file_content = self.context.androguard_apk.get_file(file_path)
-            for extractor in self.extractors:
-                # check model_name in static file
-                if len(file_name) > 0 and re.search(extractor['model_name'], file_name, re.IGNORECASE) is not None:
-                    result[extractor['fw_type']].add(
-                        ExtractedModel(SourceType.STATIC_FILE,
-                                       file_content, file_path)
-                    )
-                if len(file_content) > 0:
-                    # check magic_number in static file
-                    result[extractor['fw_type']].update(
-                        map(lambda model: ExtractedModel(SourceType.STATIC_FILE, model, file_path),
-                            self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], file_content, True))
-                    )
+        if not self.args.no_static:
+            logger.info("Start statically extracting.")
+            # extract statically
+            # extract by scan files inside apk
+            files = self.context.androguard_apk.get_files()
+            # we will also check files outside the `assets/` directory
+            for file_path in filter(lambda p: p.startswith("assets/"), files):
+                file_name = file_path[file_path.rfind('/')+1:]
+                file_content = self.context.androguard_apk.get_file(file_path)
+                for extractor in self.extractors:
+                    # check model_name in static file
+                    if len(file_name) > 0 and re.search(extractor['model_name'], file_name, re.IGNORECASE) is not None:
+                        result[extractor['fw_type']].add(
+                            ExtractedModel(SourceType.STATIC_FILE,
+                                           file_content, file_path)
+                        )
+                    if len(file_content) > 0:
+                        # check magic_number in static file
+                        result[extractor['fw_type']].update(
+                            map(lambda model: ExtractedModel(SourceType.STATIC_FILE, model, file_path),
+                                self.extract_models_by_magic_number(extractor['magic_numbers'], extractor['model_checker_function'], file_content, True))
+                        )
+            logger.info("End statically extracting.")
 
-        # extract dynamically
-        # extract model by run apk on device
-        pid = self.install_and_swap_applicion()
-        if pid is None:
-            logger.warning(
-                'Failed to swap applicaion, we will using static extractor only: %s', self.context.package_name)
-            return result
+        if not self.args.no_dynamic:
+            logger.info("Start dynamically extracting.")
+            # extract dynamically
+            # extract model by run apk on device
+            pid = self.install_and_swap_applicion()
+            if pid is None:
+                logger.warning(
+                    'Failed to swap applicaion, we will using static extractor only: %s', self.context.package_name)
+                return result
 
-        frida_device: frida.core.Device = self.context.device.frida_device
-        session = frida_device.attach(pid)
+            try:
+                frida_device: frida.core.Device = self.context.device.frida_device
+                session = frida_device.attach(pid)
 
-        # setup extract in multiple way
-        self.setup_extract_by_scan_mem(session, result)
-        self.setup_extract_by_hook_deallocation(session, result)
-        self.setup_extract_by_hook_file_access(session, result)
-        self.setup_extract_by_hook_jni_call(session, result)
+                # setup extract in multiple way
+                # self.setup_extract_by_scan_mem(session, result)
+                # self.setup_extract_by_hook_deallocation(session, result)
+                self.setup_extract_by_hook_file_access(session, result)
+                self.setup_extract_by_hook_jni_call(session, result)
 
-        # for each framework, we hook specific model_load function
-        for extractor in self.extractors:
-            self.setup_extract_by_hook_model_loading(
-                extractor, session, result)
-        frida_device.resume(pid)
-        # sleep for a while
-        time.sleep(30)
-        session.detach()
+                # for each framework, we hook specific model_load function
+                for extractor in self.extractors:
+                    self.setup_extract_by_hook_model_loading(
+                        extractor, session, result)
+                frida_device.resume(pid)
+                # sleep for a while
+                time.sleep(30)
+                logger.info("dynamically extracting timeout.")
+            except Exception as e:
+                logger.warning(
+                    'Exception raised during extracting model dynamically: %s, error: %s', self.context.package_name, e)
+            self.context.device.adb_uninstall_pkg(
+                self.context.package_name)
+            if session is not None:
+                session.detach()
+            logger.info("End dynamically extracting.")
 
         return result
 
@@ -211,6 +226,8 @@ class MLExtractor:
         #                                                                                                           +-> search position by magic_numbers and check by model_checker -> accept
         #                                                                                                                                                                           +-> deny
         models = set()
+        if len(buf) == 0:
+            return models
         # we cannot give any evaluation when magic_numbers is empty or model_checker_function is None, just treat it as a exactly file
         if is_exactly or len(magic_numbers) == 0 or (model_checker_function is None):
             if len(magic_numbers) > 0:
@@ -236,6 +253,9 @@ class MLExtractor:
                     maybe_model = buf[(cur_pos - offset):]
                     if model_checker_function(maybe_model):
                         models.add(maybe_model)
+        if len(models) > 0:
+            logger.info(
+                "extract_models_by_magic_number(): collected %s models", len(models))
         return models
 
     # TODO: Determine the time to extract
@@ -288,7 +308,7 @@ class MLExtractor:
             self.context.package_name)
         files_dir = '{}/files'.format(data_dir)
 
-        def callback_on_message(msg):
+        def callback_on_message(msg, bs):
             logger.debug(msg)
             file_path = msg['payload']['file_path']
             # TODO: better way to check ret here
@@ -380,6 +400,7 @@ def model_checker_tflite(maybe_model: bytes) -> bool:
 
     @concurrent.process(timeout=10)
     def model_checker_tflite_internal(maybe_model: bytes) -> bool:
+        util.mute_stdout_and_stderr()
         # setup interpreter
         interpreter = tf.lite.Interpreter(
             model_content=maybe_model)
@@ -421,6 +442,7 @@ def model_checker_paddle_lite(maybe_model: bytes) -> bool:
 
     @concurrent.process(timeout=10)
     def model_checker_paddle_lite_internal(maybe_model: bytes):
+        util.mute_stdout_and_stderr()
         config = pdlite.MobileConfig()
         config.set_model_from_buffer(maybe_model)
         pdlite.create_paddle_predictor(config)

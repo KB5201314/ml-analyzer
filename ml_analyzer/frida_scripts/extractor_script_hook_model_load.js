@@ -17,12 +17,12 @@ rpc.exports = {
                 },
                 onLeave: function (retval) {
                     for (var func of model_load_functions) {
-                        console.trace(`${func_name_dlopen}(${this.filename}): searching for function: ${func}`);
+                        console.log(`${func_name_dlopen}(${this.filename}): searching for function: ${func}`);
                         var ptr_func = Module.findExportByName(this.filename, func['func_name']);
                         if (ptr_func == null) {
                             console.error(`${func_name_dlopen}(${this.filename}): unable to find function with name \`${func['func_name']}\``);
                         } else {
-                            console.info(`${func_name_dlopen}(${this.filename}): \`${func['func_name']}\` detected here`);
+                            console.log(`${func_name_dlopen}(${this.filename}): \`${func['func_name']}\` detected here`);
                             Interceptor.attach(ptr_func, {
                                 onEnter: function (args) {
                                     try {
