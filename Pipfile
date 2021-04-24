@@ -17,6 +17,7 @@ paddlelite = "==2.8"
 torch = "*"
 ncnn = {path = "./res/ncnn.tar.gz"}
 angr = "*"
+lief = "*"
 
 [dev-packages]
 pylint = "*"

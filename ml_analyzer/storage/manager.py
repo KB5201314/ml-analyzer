@@ -87,6 +87,10 @@ class StorageManager:
                 ApkFramework.get_or_create(apk_hash=context.sha1, framework=fw_type,
                                            evidence_type=evidence.evidence_type, remark=evidence.value)
 
+    def read_detect_framework_results(self, apk_hash: str) -> List[ApkFramework]:
+        results = list(ApkFramework.select().where(ApkFramework.apk_hash == apk_hash))
+        return results
+
     def save_extract_model_results(self, context: Context, extract_results: Dict[str, List[ExtractedModel]]):
         for fw_type, models in extract_results.items():
             for model in models:

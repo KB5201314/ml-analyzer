@@ -7,6 +7,8 @@ from ml_analyzer.context import ContextBuilder
 from ml_analyzer.storage.manager import StorageManager, DEAFULT_DATA_DIR
 from ml_analyzer.detect import MLDetector
 from ml_analyzer.extract import MLExtractor
+from ml_analyzer.analysis.apk import ApkAnalyzer
+from ml_analyzer.analysis.model import ModelAnalyzer
 
 
 def parse_args():
@@ -39,7 +41,9 @@ def parse_args():
     parser_analysis_apk = subparsers.add_parser(
         name='analysis-apk', description='Analysis apk file.')
     parser_analysis_apk.add_argument(
-        '--apk-hash', action='store', required=True, help='Hash value of apk file')
+        '--apk', action='store', required=True, help='Path of apk file')
+    parser_analysis_apk.add_argument(
+        '--flowdroid-file', action='store', required=False, help='Path of generated flowdroid input sources and sinks file')
     parser_attack = subparsers.add_parser(
         name='attack', description='Attack a model')
     parser_attack.add_argument(
@@ -89,7 +93,13 @@ def run():
     elif args.subcommand == 'analysis-model':
         pass
     elif args.subcommand == 'analysis-apk':
-        pass
+        context = ContextBuilder().with_data_dir(
+            args.data_dir).with_apk(args.apk).build()
+        context.describe()
+        logger.info("Analysis ML apk: %s", args.apk)
+        analyzer = ApkAnalyzer(context, args)
+        analyzer.analysis()
+
     elif args.subcommand == 'attack':
         pass
 
