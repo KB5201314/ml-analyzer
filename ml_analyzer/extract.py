@@ -52,9 +52,11 @@ class ExtractedModel:
 
 
 class MLExtractor:
-    def __init__(self, context: Context, args):
+    def __init__(self, context: Context, no_static: bool = False, no_dynamic: bool = False):
         self.context = context
-        self.args = args
+        self.no_static = no_static
+        self.no_dynamic = no_dynamic
+
         # init extractors
         self.extractors: List[Dict[str, Any]] = [
             {
@@ -126,7 +128,7 @@ class MLExtractor:
 
     def extract(self) -> Dict[str, Set[ExtractedModel]]:
         result = defaultdict(set)
-        if not self.args.no_static:
+        if not self.no_static:
             logger.info("Start statically extracting.")
             # extract statically
             # extract by scan files inside apk
@@ -150,7 +152,7 @@ class MLExtractor:
                         )
             logger.info("End statically extracting.")
 
-        if not self.args.no_dynamic:
+        if not self.no_dynamic:
             logger.info("Start dynamically extracting.")
             # extract dynamically
             # extract model by run apk on device

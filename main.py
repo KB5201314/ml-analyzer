@@ -81,7 +81,7 @@ def run():
 
         context.describe()
         logger.info("Extracting ML model for apk: %s", args.apk)
-        extractor = MLExtractor(context, args)
+        extractor = MLExtractor(context, args.no_static, args.no_dynamic)
         extract_results = extractor.extract()
         logger.debug("Extracting ML model result:")
         for fw_type, models in extract_results.items():
