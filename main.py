@@ -91,7 +91,11 @@ def run():
         context.storage.save_extract_model_results(context, extract_results)
 
     elif args.subcommand == 'analysis-model':
-        pass
+        logger.info("Analysis ML model: %s", args.model_hash)
+        context = ContextBuilder().with_data_dir(args.data_dir).build()
+        analyzer = ModelAnalyzer(context, args)
+        analyzer.analysis()
+
     elif args.subcommand == 'analysis-apk':
         context = ContextBuilder().with_data_dir(
             args.data_dir).with_apk(args.apk).build()

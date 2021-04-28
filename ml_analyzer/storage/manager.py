@@ -88,7 +88,8 @@ class StorageManager:
                                            evidence_type=evidence.evidence_type, remark=evidence.value)
 
     def read_detect_framework_results(self, apk_hash: str) -> List[ApkFramework]:
-        results = list(ApkFramework.select().where(ApkFramework.apk_hash == apk_hash))
+        results = list(ApkFramework.select().where(
+            ApkFramework.apk_hash == apk_hash))
         return results
 
     def save_extract_model_results(self, context: Context, extract_results: Dict[str, List[ExtractedModel]]):
@@ -105,3 +106,6 @@ class StorageManager:
                 # FIXME: duplicate apk-model mapping caused by difference type
                 ApkModel.get_or_create(apk_hash=context.sha1, model_hash=sha1,
                                        source_type=model.source_type, source=model.source)
+
+    def get_model_data_path(self, model_hash: str) -> str:
+        return '{}/model/{}.model'.format(self.data_dir, model_hash)
